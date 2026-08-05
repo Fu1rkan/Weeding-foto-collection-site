@@ -756,6 +756,73 @@ h3 {
   max-width: 10ch;
 }
 
+.gallery-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  border: 1px solid rgba(108, 74, 62, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 248, 243, 0.76);
+  padding: 0.35rem;
+}
+
+.segmented-control button,
+.sort-control select {
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 850;
+}
+
+.segmented-control button {
+  background: transparent;
+  color: #6c4a3e;
+  cursor: pointer;
+  padding: 0.65rem 0.9rem;
+}
+
+.segmented-control button.is-active {
+  background: #6c4a3e;
+  color: #fff8f3;
+}
+
+.segmented-control button:disabled,
+.sort-control select:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.sort-control {
+  display: grid;
+  gap: 0.4rem;
+  color: #6c4a3e;
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sort-control select {
+  appearance: none;
+  border: 1px solid rgba(108, 74, 62, 0.16);
+  background:
+    linear-gradient(45deg, transparent 50%, #6c4a3e 50%) right 1rem center / 0.45rem 0.45rem no-repeat,
+    linear-gradient(135deg, #6c4a3e 50%, transparent 50%) right 0.7rem center / 0.45rem 0.45rem no-repeat,
+    #fff8f3;
+  color: #6c4a3e;
+  cursor: pointer;
+  padding: 0.7rem 2.1rem 0.7rem 0.9rem;
+}
+
 .masonry-gallery {
   column-count: 3;
   column-gap: 1rem;
@@ -1019,6 +1086,17 @@ h3 {
 
   .lightbox-content {
     max-height: 94vh;
+  }
+
+  .gallery-controls,
+  .segmented-control,
+  .sort-control,
+  .sort-control select {
+    width: 100%;
+  }
+
+  .segmented-control button {
+    flex: 1;
   }
 }
 

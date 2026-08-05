@@ -4,6 +4,17 @@ import { usePageTitle } from '../hooks/usePageTitle.js';
 import { getGalleryMediaPage } from '../services/mediaGalleryService.js';
 import { formatFileSize } from '../utils/fileUtils.js';
 
+const mediaFilterOptions = [
+  { label: 'Alle', value: 'all' },
+  { label: 'Nur Bilder', value: 'image' },
+  { label: 'Nur Videos', value: 'video' },
+];
+
+const sortOptions = [
+  { label: 'Neueste zuerst', value: 'desc' },
+  { label: 'Älteste zuerst', value: 'asc' },
+];
+
 function formatUploadDate(uploadedAt) {
   const date = uploadedAt?.toDate?.();
 
@@ -43,19 +54,28 @@ function GalleryMedia({ item, isLightbox = false }) {
 export default function GalleryPage() {
   usePageTitle('Galerie');
 
-  const [cursor, setCursor] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [mediaFilter, setMediaFilter] = useState('all');
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
-  const hasLoadedInitialPage = useRef(false);
+  const [sortOrder, setSortOrder] = useState('desc');
+  const cursorRef = useRef(null);
+  const hasMoreRef = useRef(true);
   const isLoadingRef = useRef(false);
   const sentinelRef = useRef(null);
 
-  const loadMore = useCallback(async () => {
-    if (isLoadingRef.current || !hasMore) {
+  const loadMore = useCallback(async ({ reset = false } = {}) => {
+    if (isLoadingRef.current || (!reset && !hasMoreRef.current)) {
       return;
+    }
+
+    if (reset) {
+      cursorRef.current = null;
+      hasMoreRef.current = true;
+      setHasMore(true);
+      setMediaItems([]);
     }
 
     isLoadingRef.current = true;
@@ -63,10 +83,17 @@ export default function GalleryPage() {
     setErrorMessage('');
 
     try {
-      const result = await getGalleryMediaPage(cursor);
+      const result = await getGalleryMediaPage({
+        cursor: reset ? null : cursorRef.current,
+        mediaFilter,
+        sortOrder,
+      });
 
-      setMediaItems((currentItems) => [...currentItems, ...result.items]);
-      setCursor(result.cursor);
+      setMediaItems((currentItems) =>
+        reset ? result.items : [...currentItems, ...result.items],
+      );
+      cursorRef.current = result.cursor;
+      hasMoreRef.current = result.hasMore;
       setHasMore(result.hasMore);
     } catch {
       setErrorMessage(
@@ -76,13 +103,10 @@ export default function GalleryPage() {
       isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [cursor, hasMore]);
+  }, [mediaFilter, sortOrder]);
 
   useEffect(() => {
-    if (!hasLoadedInitialPage.current) {
-      hasLoadedInitialPage.current = true;
-      loadMore();
-    }
+    loadMore({ reset: true });
   }, [loadMore]);
 
   useEffect(() => {
@@ -114,6 +138,45 @@ export default function GalleryPage() {
             Hier erscheinen alle hochgeladenen Bilder und Videos der Gäste. Beim
             Scrollen werden weitere Erinnerungen automatisch nachgeladen.
           </p>
+        </div>
+
+        <div className="gallery-controls" aria-label="Galerie filtern und sortieren">
+          <div className="segmented-control" aria-label="Medientyp filtern">
+            {mediaFilterOptions.map((option) => (
+              <button
+                aria-pressed={mediaFilter === option.value}
+                className={mediaFilter === option.value ? 'is-active' : ''}
+                disabled={isLoading}
+                key={option.value}
+                onClick={() => {
+                  setMediaFilter(option.value);
+                  setSelectedItem(null);
+                }}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <label className="sort-control" htmlFor="gallery-sort">
+            Sortierung
+            <select
+              disabled={isLoading}
+              id="gallery-sort"
+              onChange={(event) => {
+                setSortOrder(event.target.value);
+                setSelectedItem(null);
+              }}
+              value={sortOrder}
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
@@ -150,11 +213,11 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {!isLoading && !errorMessage && mediaItems.length === 0 && (
+      {!isLoading && !errorMessage && !hasMore && mediaItems.length === 0 && (
         <div className="empty-gallery">
           <p className="eyebrow">Noch leer</p>
           <h2>Noch keine Erinnerungen hochgeladen.</h2>
-          <p>Die ersten Fotos und Videos erscheinen hier automatisch.</p>
+          <p>Für den aktuellen Filter wurden keine Medien gefunden.</p>
         </div>
       )}
 
