@@ -1,0 +1,81 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.get('admin', false) == true;
+    }
+
+    function isImageType(fileType) {
+      return fileType in [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/heic',
+        'image/heif',
+      ];
+    }
+
+    function isVideoType(fileType) {
+      return fileType in [
+        'video/mp4',
+        'video/quicktime',
+        'video/webm',
+        'video/hevc',
+      ];
+    }
+
+    function hasImageExtension(fileName) {
+      return fileName.lower().matches('.*[.](jpg|jpeg|png|webp|heic)$');
+    }
+
+    function hasVideoExtension(fileName) {
+      return fileName.lower().matches('.*[.](mp4|mov|webm|hevc)$');
+    }
+
+    function isAllowedImageMetadata() {
+      return hasImageExtension(request.resource.data.fileName)
+        && isImageType(request.resource.data.fileType)
+        && request.resource.data.fileSize <= 50 * 1024 * 1024;
+    }
+
+    function isAllowedVideoMetadata() {
+      return hasVideoExtension(request.resource.data.fileName)
+        && isVideoType(request.resource.data.fileType)
+        && request.resource.data.fileSize <= 2 * 1024 * 1024 * 1024;
+    }
+
+    function hasValidMediaFields() {
+      return request.resource.data.keys().hasOnly([
+          'fileName',
+          'fileType',
+          'fileSize',
+          'uploadedAt',
+          'downloadUrl',
+        ])
+        && request.resource.data.fileName is string
+        && request.resource.data.fileName.size() > 0
+        && request.resource.data.fileType is string
+        && request.resource.data.fileSize is int
+        && request.resource.data.fileSize > 0
+        && request.resource.data.uploadedAt == request.time
+        && request.resource.data.downloadUrl is string
+        && request.resource.data.downloadUrl.matches('https://.*')
+        && (isAllowedImageMetadata() || isAllowedVideoMetadata());
+    }
+
+    match /media/{mediaId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && hasValidMediaFields();
+      allow update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
