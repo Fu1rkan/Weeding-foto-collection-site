@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.get('admin', false) == true;
+    }
+
+    function hasImageExtension(fileName) {
+      return fileName.lower().matches('.*[.](jpg|jpeg|png|webp|heic)$');
+    }
+
+    function hasVideoExtension(fileName) {
+      return fileName.lower().matches('.*[.](mp4|mov|webm|hevc)$');
+    }
+
+    function isImageContentType(contentType) {
+      return contentType in [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/heic',
+        'image/heif',
+      ];
+    }
+
+    function isVideoContentType(contentType) {
+      return contentType in [
+        'video/mp4',
+        'video/quicktime',
+        'video/webm',
+        'video/hevc',
+      ];
+    }
+
+    function isAllowedImageUpload(fileName) {
+      return hasImageExtension(fileName)
+        && isImageContentType(request.resource.contentType)
+        && request.resource.size <= 50 * 1024 * 1024;
+    }
+
+    function isAllowedVideoUpload(fileName) {
+      return hasVideoExtension(fileName)
+        && isVideoContentType(request.resource.contentType)
+        && request.resource.size <= 2 * 1024 * 1024 * 1024;
+    }
+
+    function isAllowedStoredImage(fileName) {
+      return hasImageExtension(fileName)
+        && isImageContentType(resource.contentType)
+        && resource.size <= 50 * 1024 * 1024;
+    }
+
+    function isAllowedStoredVideo(fileName) {
+      return hasVideoExtension(fileName)
+        && isVideoContentType(resource.contentType)
+        && resource.size <= 2 * 1024 * 1024 * 1024;
+    }
+
+    match /guest-uploads/{fileName} {
+      allow get, list: if isSignedIn()
+        && (isAdmin() || isAllowedStoredImage(fileName) || isAllowedStoredVideo(fileName));
+      allow create: if isSignedIn()
+        && (isAllowedImageUpload(fileName) || isAllowedVideoUpload(fileName));
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

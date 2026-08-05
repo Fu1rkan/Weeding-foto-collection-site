@@ -1,9 +1,9 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.local.rules"
   },
   "storage": {
-    "rules": "storage.rules"
+    "rules": "storage.local.rules"
   },
   "hosting": {
     "public": "dist",
