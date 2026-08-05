@@ -252,9 +252,20 @@ export default function AdminPage() {
             <article className="admin-media-item" key={item.id}>
               <div className="admin-media-preview">
                 {item.mediaKind === 'video' ? (
-                  <video muted playsInline preload="metadata" src={item.downloadUrl} />
+                  <video muted playsInline preload="none" src={item.downloadUrl} />
                 ) : (
-                  <img alt={item.fileName} loading="lazy" src={item.downloadUrl} />
+                  <img
+                    alt={item.fileName}
+                    decoding="async"
+                    loading="lazy"
+                    sizes="8rem"
+                    src={item.thumbnailUrl ?? item.downloadUrl}
+                    srcSet={
+                      item.thumbnailUrl
+                        ? `${item.thumbnailUrl} 720w, ${item.downloadUrl} 2200w`
+                        : undefined
+                    }
+                  />
                 )}
               </div>
 

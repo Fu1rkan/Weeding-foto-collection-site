@@ -35,18 +35,32 @@ function GalleryMedia({ item, isLightbox = false }) {
         controls={isLightbox}
         muted={!isLightbox}
         playsInline
-        preload="metadata"
+        preload={isLightbox ? 'metadata' : 'none'}
         src={item.downloadUrl}
       />
     );
   }
+
+  const imageUrl = isLightbox
+    ? item.downloadUrl
+    : item.thumbnailUrl ?? item.downloadUrl;
+  const responsiveSrcSet =
+    !isLightbox && item.thumbnailUrl
+      ? `${item.thumbnailUrl} 720w, ${item.downloadUrl} 2200w`
+      : undefined;
 
   return (
     <img
       alt={item.fileName}
       decoding="async"
       loading={isLightbox ? 'eager' : 'lazy'}
-      src={item.downloadUrl}
+      sizes={
+        isLightbox
+          ? '100vw'
+          : '(max-width: 420px) calc(100vw - 2rem), (max-width: 900px) calc((100vw - 3rem) / 2), 380px'
+      }
+      src={imageUrl}
+      srcSet={responsiveSrcSet}
     />
   );
 }
@@ -97,8 +111,10 @@ export default function GalleryPage() {
       setHasMore(result.hasMore);
     } catch {
       setErrorMessage(
-        'Die Galerie konnte nicht geladen werden. Bitte prüfe die Firestore-Berechtigungen.',
+        'Die Galerie konnte nicht geladen werden. Bitte lade die Seite neu oder melde dich erneut über den Gästecode an.',
       );
+      hasMoreRef.current = false;
+      setHasMore(false);
     } finally {
       isLoadingRef.current = false;
       setIsLoading(false);
@@ -123,6 +139,7 @@ export default function GalleryPage() {
 
   useInfiniteScroll({
     hasMore,
+    isEnabled: !errorMessage,
     isLoading,
     onLoadMore: loadMore,
     targetRef: sentinelRef,

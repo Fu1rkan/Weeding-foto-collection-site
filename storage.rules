@@ -61,6 +61,26 @@ service firebase.storage {
         && resource.size <= 2 * 1024 * 1024 * 1024;
     }
 
+    function isAllowedThumbnailUpload(fileName) {
+      return fileName.lower().matches('.*[.]webp$')
+        && request.resource.contentType == 'image/webp'
+        && request.resource.size <= 2 * 1024 * 1024;
+    }
+
+    function isAllowedStoredThumbnail(fileName) {
+      return fileName.lower().matches('.*[.]webp$')
+        && resource.contentType == 'image/webp'
+        && resource.size <= 2 * 1024 * 1024;
+    }
+
+    match /guest-uploads/thumbnails/{fileName} {
+      allow get, list: if isSignedIn()
+        && (isAdmin() || isAllowedStoredThumbnail(fileName));
+      allow create: if isSignedIn() && isAllowedThumbnailUpload(fileName);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
     match /guest-uploads/{fileName} {
       allow get, list: if isSignedIn()
         && (isAdmin() || isAllowedStoredImage(fileName) || isAllowedStoredVideo(fileName));

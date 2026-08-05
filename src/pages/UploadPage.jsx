@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { optimizeImageForUpload } from '../services/imageCompressionService.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { calculateFileHash } from '../services/fileHashService.js';
 import { getGuestId } from '../services/guestIdentityService.js';
@@ -8,6 +9,7 @@ import {
   getGuestUploadCountLast24Hours,
   hasExistingFileHash,
   saveMediaMetadata,
+  uploadMediaThumbnail,
 } from '../services/mediaUploadService.js';
 import {
   formatFileSize,
@@ -29,9 +31,17 @@ const uploadStatusLabels = {
   canceled: 'Abgebrochen',
 };
 
-function createUploadItem(file) {
+function createUploadItem(optimizedFile) {
+  const { file, originalFile, thumbnailFile, wasCompressed } = optimizedFile;
+  const compressionMessage = wasCompressed
+    ? `Bild wurde für schnelleren Upload komprimiert: ${formatFileSize(
+        originalFile.size,
+      )} → ${formatFileSize(file.size)}.`
+    : '';
+
   return {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${file.name}`,
+    compressionMessage,
     file,
     fileHash: '',
     fileName: file.name,
@@ -39,11 +49,24 @@ function createUploadItem(file) {
     guestId: '',
     mediaType: getMediaType(file),
     message: '',
+    originalFile,
     previewUrl: URL.createObjectURL(file),
     progress: 0,
     status: 'queued',
     storagePath: '',
+    thumbnailFile,
+    wasCompressed,
   };
+}
+
+async function optimizeFilesForUpload(files) {
+  const optimizedFiles = [];
+
+  for (const file of files) {
+    optimizedFiles.push(await optimizeImageForUpload(file));
+  }
+
+  return optimizedFiles;
 }
 
 function getUploadErrorMessage(error) {
@@ -141,12 +164,32 @@ export default function UploadPage() {
 
           try {
             const downloadUrl = await getDownloadUrl();
+            let thumbnailUrl = '';
+
+            if (item.thumbnailFile) {
+              updateUploadItem(item.id, {
+                message:
+                  'Upload abgeschlossen. Optimierte Vorschau wird gespeichert.',
+                progress: 100,
+                status: 'saving',
+              });
+
+              try {
+                thumbnailUrl = await uploadMediaThumbnail(
+                  item.thumbnailFile,
+                  item.fileHash,
+                );
+              } catch {
+                thumbnailUrl = '';
+              }
+            }
 
             await saveMediaMetadata({
               downloadUrl,
               file: item.file,
               fileHash: item.fileHash,
               guestId: item.guestId,
+              thumbnailUrl,
             });
 
             updateUploadItem(item.id, {
@@ -200,7 +243,7 @@ export default function UploadPage() {
         });
 
         try {
-          const fileHash = await calculateFileHash(item.file);
+          const fileHash = await calculateFileHash(item.originalFile);
 
           if (hashesInCurrentSelection.has(fileHash)) {
             blockedCount += 1;
@@ -323,7 +366,7 @@ export default function UploadPage() {
     } catch {
       setFeedback({
         message:
-          'Das Upload-Kontingent konnte nicht geprüft werden. Bitte versuche es später erneut.',
+          'Das Upload-Kontingent konnte nicht geprüft werden. Bitte lade die Seite neu oder melde dich erneut über den Gästecode an.',
         type: 'error',
       });
       return;
@@ -348,7 +391,16 @@ export default function UploadPage() {
       return;
     }
 
-    const nextItems = supportedFiles.map(createUploadItem);
+    setFeedback({
+      message: 'Dateien werden für schnelleren Upload vorbereitet.',
+      type: 'info',
+    });
+
+    const optimizedFiles = await optimizeFilesForUpload(supportedFiles);
+    const compressedCount = optimizedFiles.filter(
+      (optimizedFile) => optimizedFile.wasCompressed,
+    ).length;
+    const nextItems = optimizedFiles.map(createUploadItem);
 
     nextItems.forEach((item) => {
       previewUrlsRef.current.add(item.previewUrl);
@@ -360,7 +412,9 @@ export default function UploadPage() {
       message:
         unsupportedCount > 0
           ? `${supportedFiles.length} Datei(en) werden geprüft. ${unsupportedCount} Datei(en) wurden übersprungen.`
-          : `${supportedFiles.length} Datei(en) werden geprüft.`,
+          : compressedCount > 0
+            ? `${supportedFiles.length} Datei(en) werden geprüft. ${compressedCount} Bild(er) wurden komprimiert.`
+            : `${supportedFiles.length} Datei(en) werden geprüft.`,
       type: 'info',
     });
 
@@ -438,9 +492,14 @@ export default function UploadPage() {
             <article className="upload-item" key={item.id}>
               <div className="upload-preview">
                 {item.mediaType === 'image' ? (
-                  <img alt={item.fileName} src={item.previewUrl} />
+                  <img
+                    alt={item.fileName}
+                    decoding="async"
+                    loading="lazy"
+                    src={item.previewUrl}
+                  />
                 ) : (
-                  <video controls muted src={item.previewUrl} />
+                  <video controls muted preload="metadata" src={item.previewUrl} />
                 )}
               </div>
 
@@ -464,6 +523,10 @@ export default function UploadPage() {
                   </progress>
                   <span>{item.progress}%</span>
                 </div>
+
+                {item.compressionMessage && (
+                  <p className="upload-meta-note">{item.compressionMessage}</p>
+                )}
 
                 {item.message && (
                   <p className={`upload-message is-${item.status}`}>

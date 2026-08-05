@@ -20,6 +20,7 @@ import { deleteObject, getMetadata, ref, uploadBytes } from 'firebase/storage';
 const PROJECT_ID = process.env.GCLOUD_PROJECT ?? 'demo-hochzeitswebseite-rules';
 const STORAGE_BUCKET = `gs://${PROJECT_ID}.appspot.com`;
 const IMAGE_LIMIT_BYTES = 50 * 1024 * 1024;
+const THUMBNAIL_LIMIT_BYTES = 2 * 1024 * 1024;
 const VALID_HASH = 'a'.repeat(64);
 
 let testEnv;
@@ -72,6 +73,23 @@ describe('Firestore media rules', () => {
 
     await assertSucceeds(
       setDoc(doc(guest.firestore(), `media/${VALID_HASH}`), mediaData()),
+    );
+  });
+
+  it('allows optimized image metadata with a thumbnail URL', async () => {
+    const guest = testEnv.authenticatedContext('guest-user');
+    const fileHash = 'b'.repeat(64);
+
+    await assertSucceeds(
+      setDoc(
+        doc(guest.firestore(), `media/${fileHash}`),
+        mediaData({
+          fileHash,
+          fileName: 'photo.webp',
+          fileType: 'image/webp',
+          thumbnailUrl: 'https://example.com/photo-thumbnail.webp',
+        }),
+      ),
     );
   });
 
@@ -170,6 +188,31 @@ describe('Storage guest upload rules', () => {
       ),
     );
     await assertSucceeds(getMetadata(storageFile(guest, 'guest-uploads/video.mp4')));
+  });
+
+  it('allows guests to upload optimized image thumbnails', async () => {
+    const guest = testEnv.authenticatedContext('guest-user');
+
+    await assertSucceeds(
+      uploadBytes(
+        storageFile(guest, 'guest-uploads/thumbnails/photo-thumbnail.webp'),
+        createBlob('image/webp'),
+      ),
+    );
+    await assertSucceeds(
+      getMetadata(storageFile(guest, 'guest-uploads/thumbnails/photo-thumbnail.webp')),
+    );
+  });
+
+  it('blocks oversized optimized image thumbnails', async () => {
+    const guest = testEnv.authenticatedContext('guest-user');
+
+    await assertFails(
+      uploadBytes(
+        storageFile(guest, 'guest-uploads/thumbnails/too-large-thumbnail.webp'),
+        createBlob('image/webp', THUMBNAIL_LIMIT_BYTES + 1),
+      ),
+    );
   });
 
   it('blocks unauthenticated uploads and uploads outside guest-uploads', async () => {

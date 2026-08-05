@@ -9,6 +9,7 @@ export default function GuestAccessPage() {
 
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isAuthenticated, login } = useGuestAccess();
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,13 +21,16 @@ export default function GuestAccessPage() {
     }
   }, [isAuthenticated, navigate, targetPath]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setIsSubmitting(true);
+    setError('');
 
-    const result = login(code);
+    const result = await login(code);
 
     if (!result.success) {
       setError(result.message);
+      setIsSubmitting(false);
       return;
     }
 
@@ -48,6 +52,7 @@ export default function GuestAccessPage() {
           <input
             autoComplete="one-time-code"
             id="guest-code"
+            disabled={isSubmitting}
             onChange={(event) => {
               setCode(event.target.value);
               setError('');
@@ -60,8 +65,8 @@ export default function GuestAccessPage() {
 
         {error && <p className="form-error">{error}</p>}
 
-        <button className="button-link" type="submit">
-          Einloggen
+        <button className="button-link" disabled={isSubmitting} type="submit">
+          {isSubmitting ? 'Einloggen...' : 'Einloggen'}
         </button>
       </form>
     </section>

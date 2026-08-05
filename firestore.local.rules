@@ -35,6 +35,7 @@ service cloud.firestore {
           'guestId',
           'uploadedAt',
           'downloadUrl',
+          'thumbnailUrl',
         ])
         && request.resource.data.fileName is string
         && request.resource.data.fileName.size() > 0
@@ -48,6 +49,13 @@ service cloud.firestore {
         && request.resource.data.uploadedAt == request.time
         && request.resource.data.downloadUrl is string
         && request.resource.data.downloadUrl.matches('https://.*')
+        && (
+          !request.resource.data.keys().hasAny(['thumbnailUrl'])
+          || (
+            request.resource.data.thumbnailUrl is string
+            && request.resource.data.thumbnailUrl.matches('https://.*')
+          )
+        )
         && (
           (
             hasImageExtension(request.resource.data.fileName)
