@@ -31,6 +31,8 @@ service cloud.firestore {
           'fileName',
           'fileType',
           'fileSize',
+          'fileHash',
+          'guestId',
           'uploadedAt',
           'downloadUrl',
         ])
@@ -39,6 +41,10 @@ service cloud.firestore {
         && request.resource.data.fileType is string
         && request.resource.data.fileSize is int
         && request.resource.data.fileSize > 0
+        && request.resource.data.fileHash is string
+        && request.resource.data.fileHash.matches('[a-f0-9]{64}')
+        && request.resource.data.guestId is string
+        && request.resource.data.guestId.size() >= 8
         && request.resource.data.uploadedAt == request.time
         && request.resource.data.downloadUrl is string
         && request.resource.data.downloadUrl.matches('https://.*')
@@ -58,7 +64,9 @@ service cloud.firestore {
 
     match /media/{mediaId} {
       allow get, list: if isLocalGuest();
-      allow create: if isLocalGuest() && hasValidMediaFields();
+      allow create: if isLocalGuest()
+        && hasValidMediaFields()
+        && request.resource.data.fileHash == mediaId;
       allow update, delete: if isAdmin();
     }
 
