@@ -515,6 +515,237 @@ h3 {
   padding: 0.8rem 1rem;
 }
 
+.upload-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.upload-intro {
+  align-items: stretch;
+}
+
+.dropzone {
+  display: grid;
+  place-items: center;
+  min-height: 22rem;
+  border: 2px dashed rgba(180, 107, 93, 0.38);
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 243, 0.82), rgba(246, 232, 223, 0.72)),
+    url("../assets/hero-background.svg") center / cover;
+  cursor: pointer;
+  padding: 2rem;
+  text-align: center;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.dropzone.is-dragging {
+  border-color: #b46b5d;
+  box-shadow: 0 18px 44px rgba(180, 107, 93, 0.18);
+  transform: translateY(-2px);
+}
+
+.dropzone-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.dropzone-icon {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: #b46b5d;
+  color: #fff8f3;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.dropzone strong {
+  color: #3a302c;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.dropzone p {
+  max-width: 32ch;
+  margin-top: 0.5rem;
+  color: #6c5d56;
+}
+
+.feedback-message {
+  border-radius: 1rem;
+  font-weight: 800;
+  padding: 0.95rem 1rem;
+}
+
+.feedback-message.is-success {
+  background: rgba(81, 135, 94, 0.14);
+  color: #376844;
+}
+
+.feedback-message.is-error {
+  background: rgba(180, 107, 93, 0.14);
+  color: #8f3f32;
+}
+
+.feedback-message.is-info {
+  background: rgba(108, 74, 62, 0.1);
+  color: #6c4a3e;
+}
+
+.upload-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.upload-item {
+  display: grid;
+  grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
+  gap: 1rem;
+  border: 1px solid rgba(108, 74, 62, 0.12);
+  border-radius: 1.35rem;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 18px 54px rgba(108, 74, 62, 0.08);
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.upload-preview {
+  min-height: 11rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #f4ded2;
+}
+
+.upload-preview img,
+.upload-preview video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-details {
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.upload-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.upload-title-row h3 {
+  overflow-wrap: anywhere;
+}
+
+.upload-title-row p {
+  margin-top: 0.25rem;
+  color: #6c5d56;
+}
+
+.status-pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(108, 74, 62, 0.1);
+  color: #6c4a3e;
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 0.35rem 0.7rem;
+}
+
+.status-pill.is-uploading {
+  background: rgba(180, 107, 93, 0.14);
+  color: #9d574b;
+}
+
+.status-pill.is-success {
+  background: rgba(81, 135, 94, 0.14);
+  color: #376844;
+}
+
+.status-pill.is-error,
+.status-pill.is-canceled {
+  background: rgba(180, 107, 93, 0.14);
+  color: #8f3f32;
+}
+
+.progress-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  color: #6c4a3e;
+  font-weight: 850;
+}
+
+.progress-row progress {
+  width: 100%;
+  height: 0.8rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #f4ded2;
+}
+
+.progress-row progress::-webkit-progress-bar {
+  background: #f4ded2;
+}
+
+.progress-row progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: #b46b5d;
+}
+
+.progress-row progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: #b46b5d;
+}
+
+.upload-message {
+  color: #6c5d56;
+  font-weight: 750;
+}
+
+.upload-message.is-success {
+  color: #376844;
+}
+
+.upload-message.is-error,
+.upload-message.is-canceled {
+  color: #8f3f32;
+}
+
+.secondary-button {
+  width: fit-content;
+  border: 1px solid rgba(108, 74, 62, 0.18);
+  border-radius: 999px;
+  background: #fff8f3;
+  color: #6c4a3e;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+  padding: 0.7rem 1rem;
+}
+
+.secondary-button:hover {
+  border-color: #b46b5d;
+  color: #b46b5d;
+}
+
 @media (max-width: 900px) {
   .countdown-section,
   .section-grid {
@@ -574,6 +805,14 @@ h3 {
   .timeline-item {
     grid-template-columns: 1fr;
   }
+
+  .upload-item {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-preview {
+    min-height: 15rem;
+  }
 }
 
 @media (max-width: 420px) {
@@ -589,5 +828,9 @@ h3 {
   .countdown-grid,
   .gallery-grid {
     grid-template-columns: 1fr;
+  }
+
+  .upload-title-row {
+    flex-direction: column;
   }
 }
