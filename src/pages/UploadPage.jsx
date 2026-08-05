@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createMediaUpload } from '../services/mediaUploadService.js';
+import {
+  createMediaUpload,
+  saveMediaMetadata,
+} from '../services/mediaUploadService.js';
 import {
   formatFileSize,
   getMediaType,
@@ -10,6 +13,7 @@ import { usePageTitle } from '../hooks/usePageTitle.js';
 const uploadStatusLabels = {
   queued: 'Wartet',
   uploading: 'Upload läuft',
+  saving: 'Speichert Daten',
   success: 'Hochgeladen',
   error: 'Fehler',
   canceled: 'Abgebrochen',
@@ -38,6 +42,10 @@ function getUploadErrorMessage(error) {
   return 'Upload fehlgeschlagen. Bitte prüfe die Firebase-Konfiguration und versuche es erneut.';
 }
 
+function getMetadataErrorMessage() {
+  return 'Datei wurde hochgeladen, aber die Informationen konnten nicht in Firestore gespeichert werden.';
+}
+
 export default function UploadPage() {
   usePageTitle('Upload');
 
@@ -48,7 +56,7 @@ export default function UploadPage() {
   const previewUrlsRef = useRef(new Set());
 
   const startUpload = useCallback((item) => {
-    const { storagePath, uploadTask } = createMediaUpload(item.file);
+    const { getDownloadUrl, storagePath, uploadTask } = createMediaUpload(item.file);
 
     setUploadItems((currentItems) =>
       currentItems.map((currentItem) =>
@@ -108,26 +116,66 @@ export default function UploadPage() {
           type: status === 'canceled' ? 'info' : 'error',
         });
       },
-      () => {
-        delete uploadTasksRef.current[item.id];
-
+      async () => {
         setUploadItems((currentItems) =>
           currentItems.map((currentItem) =>
             currentItem.id === item.id
               ? {
                   ...currentItem,
-                  message: 'Upload erfolgreich abgeschlossen.',
+                  message: 'Upload abgeschlossen. Informationen werden gespeichert.',
                   progress: 100,
-                  status: 'success',
+                  status: 'saving',
                 }
               : currentItem,
           ),
         );
 
-        setFeedback({
-          message: `${item.fileName} wurde erfolgreich hochgeladen.`,
-          type: 'success',
-        });
+        try {
+          const downloadUrl = await getDownloadUrl();
+
+          await saveMediaMetadata({
+            downloadUrl,
+            file: item.file,
+          });
+
+          setUploadItems((currentItems) =>
+            currentItems.map((currentItem) =>
+              currentItem.id === item.id
+                ? {
+                    ...currentItem,
+                    message: 'Upload und Speicherung erfolgreich abgeschlossen.',
+                    progress: 100,
+                    status: 'success',
+                  }
+                : currentItem,
+            ),
+          );
+
+          setFeedback({
+            message: `${item.fileName} wurde erfolgreich hochgeladen und gespeichert.`,
+            type: 'success',
+          });
+        } catch {
+          setUploadItems((currentItems) =>
+            currentItems.map((currentItem) =>
+              currentItem.id === item.id
+                ? {
+                    ...currentItem,
+                    message: getMetadataErrorMessage(),
+                    progress: 100,
+                    status: 'error',
+                  }
+                : currentItem,
+            ),
+          );
+
+          setFeedback({
+            message: `${item.fileName} wurde hochgeladen, aber nicht in Firestore gespeichert.`,
+            type: 'error',
+          });
+        }
+
+        delete uploadTasksRef.current[item.id];
       },
     );
 
