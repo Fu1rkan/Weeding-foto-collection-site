@@ -12,6 +12,7 @@ export default function Navigation() {
         <NavLink to={routes.home}>Start</NavLink>
         <NavLink to={routes.upload}>Hochladen</NavLink>
         <NavLink to={routes.gallery}>Galerie</NavLink>
+        <NavLink to={routes.admin}>Admin</NavLink>
       </nav>
     </header>
   );
