@@ -241,6 +241,14 @@ h3 {
   padding: clamp(1.5rem, 5vw, 3rem);
 }
 
+.section-card,
+.section-grid,
+.content-card,
+.site-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 420px;
+}
+
 .section-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
@@ -731,6 +739,12 @@ h3 {
   font-weight: 750;
 }
 
+.upload-meta-note {
+  color: #6c5d56;
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
 .upload-message.is-success {
   color: #376844;
 }
@@ -1211,6 +1225,20 @@ h3 {
     padding: 1.5rem;
   }
 
+  .section-card,
+  .section-grid,
+  .content-card,
+  .site-footer,
+  .upload-item,
+  .admin-media-item,
+  .gallery-media-card {
+    box-shadow: 0 12px 34px rgba(108, 74, 62, 0.08);
+  }
+
+  .dropzone {
+    min-height: 18rem;
+  }
+
   .hero-actions,
   .site-footer {
     align-items: stretch;
@@ -1262,8 +1290,25 @@ h3 {
     width: 100%;
   }
 
+  .gallery-media-button img,
+  .gallery-media-button video {
+    min-height: 10rem;
+    max-height: 26rem;
+  }
+
   .segmented-control button {
     flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
   }
 }
 

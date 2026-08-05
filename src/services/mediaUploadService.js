@@ -8,13 +8,19 @@ import {
   serverTimestamp,
   where,
 } from 'firebase/firestore';
-import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+} from 'firebase/storage';
 import { db, storage } from './firebase.js';
 
 const MEDIA_COLLECTION = 'media';
 const UPLOAD_DIRECTORY = 'guest-uploads';
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 export const DUPLICATE_FILE_HASH_ERROR_CODE = 'media/duplicate-file';
+const CACHE_CONTROL_IMMUTABLE = 'public, max-age=31536000, immutable';
 
 function createSafeFileName(fileName) {
   return fileName
@@ -46,10 +52,17 @@ function createUploadPath(file, fileHash) {
   return `${UPLOAD_DIRECTORY}/${fileHash}-${safeFileName}.${extension}`;
 }
 
+function createThumbnailPath(file, fileHash) {
+  const safeFileName = createSafeFileName(removeFileExtension(file.name));
+
+  return `${UPLOAD_DIRECTORY}/thumbnails/${fileHash}-${safeFileName}.webp`;
+}
+
 export function createMediaUpload(file, fileHash) {
   const storagePath = createUploadPath(file, fileHash);
   const storageRef = ref(storage, storagePath);
   const uploadTask = uploadBytesResumable(storageRef, file, {
+    cacheControl: CACHE_CONTROL_IMMUTABLE,
     contentType: file.type,
   });
 
@@ -58,6 +71,17 @@ export function createMediaUpload(file, fileHash) {
     uploadTask,
     getDownloadUrl: () => getDownloadURL(uploadTask.snapshot.ref),
   };
+}
+
+export async function uploadMediaThumbnail(file, fileHash) {
+  const thumbnailPath = createThumbnailPath(file, fileHash);
+  const thumbnailRef = ref(storage, thumbnailPath);
+  const snapshot = await uploadBytes(thumbnailRef, file, {
+    cacheControl: CACHE_CONTROL_IMMUTABLE,
+    contentType: file.type,
+  });
+
+  return getDownloadURL(snapshot.ref);
 }
 
 export async function hasExistingFileHash(fileHash) {
@@ -81,7 +105,13 @@ export async function getGuestUploadCountLast24Hours(guestId) {
   }).length;
 }
 
-export function saveMediaMetadata({ downloadUrl, file, fileHash, guestId }) {
+export function saveMediaMetadata({
+  downloadUrl,
+  file,
+  fileHash,
+  guestId,
+  thumbnailUrl,
+}) {
   const mediaRef = doc(db, MEDIA_COLLECTION, fileHash);
 
   return runTransaction(db, async (transaction) => {
@@ -93,7 +123,7 @@ export function saveMediaMetadata({ downloadUrl, file, fileHash, guestId }) {
       });
     }
 
-    transaction.set(mediaRef, {
+    const metadata = {
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
@@ -101,6 +131,12 @@ export function saveMediaMetadata({ downloadUrl, file, fileHash, guestId }) {
       guestId,
       uploadedAt: serverTimestamp(),
       downloadUrl,
-    });
+    };
+
+    if (thumbnailUrl) {
+      metadata.thumbnailUrl = thumbnailUrl;
+    }
+
+    transaction.set(mediaRef, metadata);
   });
 }

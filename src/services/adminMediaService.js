@@ -26,6 +26,7 @@ function normalizeMediaDoc(docSnapshot) {
     fileSize: data.fileSize,
     fileType: data.fileType,
     mediaKind: getMediaKind(data.fileType),
+    thumbnailUrl: data.thumbnailUrl,
     uploadedAt: data.uploadedAt,
   };
 }
@@ -46,6 +47,18 @@ export async function deleteMediaItem(item) {
 
     try {
       await deleteObject(storageRef);
+    } catch (error) {
+      if (error.code !== 'storage/object-not-found') {
+        throw error;
+      }
+    }
+  }
+
+  if (item.thumbnailUrl) {
+    const thumbnailRef = ref(storage, item.thumbnailUrl);
+
+    try {
+      await deleteObject(thumbnailRef);
     } catch (error) {
       if (error.code !== 'storage/object-not-found') {
         throw error;
