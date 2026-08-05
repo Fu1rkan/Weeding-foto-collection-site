@@ -667,7 +667,8 @@ h3 {
   padding: 0.35rem 0.7rem;
 }
 
-.status-pill.is-uploading {
+.status-pill.is-uploading,
+.status-pill.is-saving {
   background: rgba(180, 107, 93, 0.14);
   color: #9d574b;
 }

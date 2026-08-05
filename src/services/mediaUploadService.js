@@ -1,6 +1,8 @@
-import { ref, uploadBytesResumable } from 'firebase/storage';
-import { storage } from './firebase.js';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { db, storage } from './firebase.js';
 
+const MEDIA_COLLECTION = 'media';
 const UPLOAD_DIRECTORY = 'guest-uploads';
 
 function createSafeFileName(fileName) {
@@ -31,5 +33,16 @@ export function createMediaUpload(file) {
   return {
     storagePath,
     uploadTask,
+    getDownloadUrl: () => getDownloadURL(uploadTask.snapshot.ref),
   };
+}
+
+export function saveMediaMetadata({ downloadUrl, file }) {
+  return addDoc(collection(db, MEDIA_COLLECTION), {
+    fileName: file.name,
+    fileType: file.type,
+    fileSize: file.size,
+    uploadedAt: serverTimestamp(),
+    downloadUrl,
+  });
 }
