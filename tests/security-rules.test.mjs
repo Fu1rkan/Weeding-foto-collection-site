@@ -6,7 +6,6 @@ import {
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -21,6 +20,7 @@ import { deleteObject, getMetadata, ref, uploadBytes } from 'firebase/storage';
 const PROJECT_ID = process.env.GCLOUD_PROJECT ?? 'demo-hochzeitswebseite-rules';
 const STORAGE_BUCKET = `gs://${PROJECT_ID}.appspot.com`;
 const IMAGE_LIMIT_BYTES = 50 * 1024 * 1024;
+const VALID_HASH = 'a'.repeat(64);
 
 let testEnv;
 
@@ -29,6 +29,8 @@ function mediaData(overrides = {}) {
     fileName: 'photo.jpg',
     fileType: 'image/jpeg',
     fileSize: 1024,
+    fileHash: VALID_HASH,
+    guestId: 'guest-user',
     uploadedAt: serverTimestamp(),
     downloadUrl: 'https://example.com/photo.jpg',
     ...overrides,
@@ -68,21 +70,25 @@ describe('Firestore media rules', () => {
   it('allows guests to create valid media metadata', async () => {
     const guest = testEnv.authenticatedContext('guest-user');
 
-    await assertSucceeds(addDoc(collection(guest.firestore(), 'media'), mediaData()));
+    await assertSucceeds(
+      setDoc(doc(guest.firestore(), `media/${VALID_HASH}`), mediaData()),
+    );
   });
 
   it('blocks unauthenticated metadata creates', async () => {
     const visitor = testEnv.unauthenticatedContext();
 
-    await assertFails(addDoc(collection(visitor.firestore(), 'media'), mediaData()));
+    await assertFails(
+      setDoc(doc(visitor.firestore(), `media/${VALID_HASH}`), mediaData()),
+    );
   });
 
   it('blocks invalid file types and oversized image metadata', async () => {
     const guest = testEnv.authenticatedContext('guest-user');
 
     await assertFails(
-      addDoc(
-        collection(guest.firestore(), 'media'),
+      setDoc(
+        doc(guest.firestore(), `media/${VALID_HASH}`),
         mediaData({
           fileName: 'malware.exe',
           fileType: 'application/x-msdownload',
@@ -91,12 +97,24 @@ describe('Firestore media rules', () => {
     );
 
     await assertFails(
-      addDoc(
-        collection(guest.firestore(), 'media'),
+      setDoc(
+        doc(guest.firestore(), `media/${VALID_HASH}`),
         mediaData({
           fileSize: IMAGE_LIMIT_BYTES + 1,
         }),
       ),
+    );
+  });
+
+  it('blocks duplicate metadata documents with the same hash for guests', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), `media/${VALID_HASH}`), mediaData());
+    });
+
+    const guest = testEnv.authenticatedContext('guest-user');
+
+    await assertFails(
+      setDoc(doc(guest.firestore(), `media/${VALID_HASH}`), mediaData()),
     );
   });
 

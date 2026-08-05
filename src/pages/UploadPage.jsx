@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle.js';
+import { calculateFileHash } from '../services/fileHashService.js';
+import { getGuestId } from '../services/guestIdentityService.js';
 import {
   createMediaUpload,
+  DUPLICATE_FILE_HASH_ERROR_CODE,
+  getGuestUploadCountLast24Hours,
+  hasExistingFileHash,
   saveMediaMetadata,
 } from '../services/mediaUploadService.js';
 import {
@@ -8,14 +14,18 @@ import {
   getMediaType,
   isSupportedMediaFile,
 } from '../utils/fileUtils.js';
-import { usePageTitle } from '../hooks/usePageTitle.js';
+
+const MAX_FILES_PER_UPLOAD = 20;
+const MAX_GUEST_UPLOADS_PER_24_HOURS = 100;
 
 const uploadStatusLabels = {
   queued: 'Wartet',
+  checking: 'Prüft Datei',
   uploading: 'Upload läuft',
   saving: 'Speichert Daten',
   success: 'Hochgeladen',
   error: 'Fehler',
+  blocked: 'Blockiert',
   canceled: 'Abgebrochen',
 };
 
@@ -23,8 +33,10 @@ function createUploadItem(file) {
   return {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${file.name}`,
     file,
+    fileHash: '',
     fileName: file.name,
     fileSize: formatFileSize(file.size),
+    guestId: '',
     mediaType: getMediaType(file),
     message: '',
     previewUrl: URL.createObjectURL(file),
@@ -39,10 +51,18 @@ function getUploadErrorMessage(error) {
     return 'Upload wurde abgebrochen.';
   }
 
+  if (error.code === 'storage/unauthorized') {
+    return 'Upload wurde blockiert. Bitte prüfe Dateityp, Dateigröße und Upload-Regeln.';
+  }
+
   return 'Upload fehlgeschlagen. Bitte prüfe die Firebase-Konfiguration und versuche es erneut.';
 }
 
-function getMetadataErrorMessage() {
+function getMetadataErrorMessage(error) {
+  if (error.code === DUPLICATE_FILE_HASH_ERROR_CODE) {
+    return 'Diese Datei wurde bereits hochgeladen und wird nicht erneut gespeichert.';
+  }
+
   return 'Datei wurde hochgeladen, aber die Informationen konnten nicht in Firestore gespeichert werden.';
 }
 
@@ -55,135 +75,203 @@ export default function UploadPage() {
   const uploadTasksRef = useRef({});
   const previewUrlsRef = useRef(new Set());
 
-  const startUpload = useCallback((item) => {
-    const { getDownloadUrl, storagePath, uploadTask } = createMediaUpload(item.file);
-
+  const updateUploadItem = useCallback((itemId, updates) => {
     setUploadItems((currentItems) =>
       currentItems.map((currentItem) =>
-        currentItem.id === item.id
+        currentItem.id === itemId
           ? {
               ...currentItem,
-              message: 'Upload wurde gestartet.',
-              status: 'uploading',
-              storagePath,
+              ...updates,
             }
           : currentItem,
       ),
     );
+  }, []);
 
-    const unsubscribe = uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
-        );
+  const startUpload = useCallback(
+    (item) => {
+      const { getDownloadUrl, storagePath, uploadTask } = createMediaUpload(
+        item.file,
+        item.fileHash,
+      );
 
-        setUploadItems((currentItems) =>
-          currentItems.map((currentItem) =>
-            currentItem.id === item.id
-              ? {
-                  ...currentItem,
-                  progress,
-                  status: 'uploading',
-                }
-              : currentItem,
-          ),
-        );
-      },
-      (error) => {
-        const message = getUploadErrorMessage(error);
-        const status = error.code === 'storage/canceled' ? 'canceled' : 'error';
+      updateUploadItem(item.id, {
+        message: 'Upload wurde gestartet.',
+        status: 'uploading',
+        storagePath,
+      });
 
-        delete uploadTasksRef.current[item.id];
+      const unsubscribe = uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
+          );
 
-        setUploadItems((currentItems) =>
-          currentItems.map((currentItem) =>
-            currentItem.id === item.id
-              ? {
-                  ...currentItem,
-                  message,
-                  status,
-                }
-              : currentItem,
-          ),
-        );
+          updateUploadItem(item.id, {
+            progress,
+            status: 'uploading',
+          });
+        },
+        (error) => {
+          const message = getUploadErrorMessage(error);
+          const status = error.code === 'storage/canceled' ? 'canceled' : 'error';
 
-        setFeedback({
-          message:
-            status === 'canceled'
-              ? `${item.fileName} wurde abgebrochen.`
-              : `${item.fileName} konnte nicht hochgeladen werden.`,
-          type: status === 'canceled' ? 'info' : 'error',
+          delete uploadTasksRef.current[item.id];
+
+          updateUploadItem(item.id, {
+            message,
+            status,
+          });
+
+          setFeedback({
+            message:
+              status === 'canceled'
+                ? `${item.fileName} wurde abgebrochen.`
+                : `${item.fileName} konnte nicht hochgeladen werden.`,
+            type: status === 'canceled' ? 'info' : 'error',
+          });
+        },
+        async () => {
+          updateUploadItem(item.id, {
+            message: 'Upload abgeschlossen. Informationen werden gespeichert.',
+            progress: 100,
+            status: 'saving',
+          });
+
+          try {
+            const downloadUrl = await getDownloadUrl();
+
+            await saveMediaMetadata({
+              downloadUrl,
+              file: item.file,
+              fileHash: item.fileHash,
+              guestId: item.guestId,
+            });
+
+            updateUploadItem(item.id, {
+              message: 'Upload und Speicherung erfolgreich abgeschlossen.',
+              progress: 100,
+              status: 'success',
+            });
+
+            setFeedback({
+              message: `${item.fileName} wurde erfolgreich hochgeladen und gespeichert.`,
+              type: 'success',
+            });
+          } catch (error) {
+            updateUploadItem(item.id, {
+              message: getMetadataErrorMessage(error),
+              progress: 100,
+              status: 'error',
+            });
+
+            setFeedback({
+              message:
+                error.code === DUPLICATE_FILE_HASH_ERROR_CODE
+                  ? `${item.fileName} wurde bereits hochgeladen und nicht erneut gespeichert.`
+                  : `${item.fileName} wurde hochgeladen, aber nicht in Firestore gespeichert.`,
+              type: 'error',
+            });
+          }
+
+          delete uploadTasksRef.current[item.id];
+        },
+      );
+
+      uploadTasksRef.current[item.id] = {
+        unsubscribe,
+        uploadTask,
+      };
+    },
+    [updateUploadItem],
+  );
+
+  const checkAndStartUploads = useCallback(
+    async (items, guestId) => {
+      const hashesInCurrentSelection = new Set();
+      let blockedCount = 0;
+      let startedCount = 0;
+
+      for (const item of items) {
+        updateUploadItem(item.id, {
+          message: 'Datei wird geprüft und Hash wird berechnet.',
+          status: 'checking',
         });
-      },
-      async () => {
-        setUploadItems((currentItems) =>
-          currentItems.map((currentItem) =>
-            currentItem.id === item.id
-              ? {
-                  ...currentItem,
-                  message: 'Upload abgeschlossen. Informationen werden gespeichert.',
-                  progress: 100,
-                  status: 'saving',
-                }
-              : currentItem,
-          ),
-        );
 
         try {
-          const downloadUrl = await getDownloadUrl();
+          const fileHash = await calculateFileHash(item.file);
 
-          await saveMediaMetadata({
-            downloadUrl,
-            file: item.file,
+          if (hashesInCurrentSelection.has(fileHash)) {
+            blockedCount += 1;
+            updateUploadItem(item.id, {
+              fileHash,
+              message:
+                'Diese Datei ist bereits in deiner aktuellen Auswahl enthalten und wird nicht erneut hochgeladen.',
+              status: 'blocked',
+            });
+            continue;
+          }
+
+          hashesInCurrentSelection.add(fileHash);
+
+          if (await hasExistingFileHash(fileHash)) {
+            blockedCount += 1;
+            updateUploadItem(item.id, {
+              fileHash,
+              message:
+                'Diese Datei wurde bereits hochgeladen und wird nicht erneut gespeichert.',
+              status: 'blocked',
+            });
+            continue;
+          }
+
+          const preparedItem = {
+            ...item,
+            fileHash,
+            guestId,
+          };
+
+          updateUploadItem(item.id, {
+            fileHash,
+            guestId,
+            message: 'Prüfung erfolgreich. Upload startet gleich.',
+            status: 'queued',
           });
 
-          setUploadItems((currentItems) =>
-            currentItems.map((currentItem) =>
-              currentItem.id === item.id
-                ? {
-                    ...currentItem,
-                    message: 'Upload und Speicherung erfolgreich abgeschlossen.',
-                    progress: 100,
-                    status: 'success',
-                  }
-                : currentItem,
-            ),
-          );
-
-          setFeedback({
-            message: `${item.fileName} wurde erfolgreich hochgeladen und gespeichert.`,
-            type: 'success',
-          });
+          startedCount += 1;
+          startUpload(preparedItem);
         } catch {
-          setUploadItems((currentItems) =>
-            currentItems.map((currentItem) =>
-              currentItem.id === item.id
-                ? {
-                    ...currentItem,
-                    message: getMetadataErrorMessage(),
-                    progress: 100,
-                    status: 'error',
-                  }
-                : currentItem,
-            ),
-          );
-
-          setFeedback({
-            message: `${item.fileName} wurde hochgeladen, aber nicht in Firestore gespeichert.`,
-            type: 'error',
+          blockedCount += 1;
+          updateUploadItem(item.id, {
+            message:
+              'Diese Datei konnte nicht geprüft werden. Bitte versuche es erneut.',
+            status: 'error',
           });
         }
+      }
 
-        delete uploadTasksRef.current[item.id];
-      },
-    );
+      if (startedCount === 0) {
+        setFeedback({
+          message:
+            blockedCount > 0
+              ? 'Es wurde keine Datei hochgeladen, weil alle Dateien blockiert wurden.'
+              : 'Es wurde keine Datei hochgeladen.',
+          type: 'error',
+        });
+        return;
+      }
 
-    uploadTasksRef.current[item.id] = {
-      unsubscribe,
-      uploadTask,
-    };
-  }, []);
+      setFeedback({
+        message:
+          blockedCount > 0
+            ? `${startedCount} Datei(en) werden hochgeladen. ${blockedCount} Datei(en) wurden blockiert.`
+            : `${startedCount} Datei(en) werden hochgeladen.`,
+        type: blockedCount > 0 ? 'info' : 'success',
+      });
+    },
+    [startUpload, updateUploadItem],
+  );
 
   useEffect(() => {
     return () => {
@@ -197,10 +285,18 @@ export default function UploadPage() {
     };
   }, []);
 
-  function handleFiles(fileList) {
+  async function handleFiles(fileList) {
     const selectedFiles = Array.from(fileList);
 
     if (!selectedFiles.length) {
+      return;
+    }
+
+    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
+      setFeedback({
+        message: `Bitte wähle maximal ${MAX_FILES_PER_UPLOAD} Dateien pro Upload aus.`,
+        type: 'error',
+      });
       return;
     }
 
@@ -210,6 +306,43 @@ export default function UploadPage() {
     if (!supportedFiles.length) {
       setFeedback({
         message: 'Bitte wähle ausschließlich Bilder oder Videos aus.',
+        type: 'error',
+      });
+      return;
+    }
+
+    const guestId = getGuestId();
+    const pendingUploadCount = uploadItems.filter((item) =>
+      ['checking', 'queued', 'uploading', 'saving'].includes(item.status),
+    ).length;
+
+    let uploadedInLast24Hours = 0;
+
+    try {
+      uploadedInLast24Hours = await getGuestUploadCountLast24Hours(guestId);
+    } catch {
+      setFeedback({
+        message:
+          'Das Upload-Kontingent konnte nicht geprüft werden. Bitte versuche es später erneut.',
+        type: 'error',
+      });
+      return;
+    }
+
+    const remainingUploads =
+      MAX_GUEST_UPLOADS_PER_24_HOURS - uploadedInLast24Hours - pendingUploadCount;
+
+    if (remainingUploads <= 0) {
+      setFeedback({
+        message: `Du hast das Limit von ${MAX_GUEST_UPLOADS_PER_24_HOURS} Dateien innerhalb von 24 Stunden erreicht.`,
+        type: 'error',
+      });
+      return;
+    }
+
+    if (supportedFiles.length > remainingUploads) {
+      setFeedback({
+        message: `Du kannst aktuell noch ${remainingUploads} Datei(en) hochladen. Bitte wähle weniger Dateien aus.`,
         type: 'error',
       });
       return;
@@ -226,12 +359,12 @@ export default function UploadPage() {
     setFeedback({
       message:
         unsupportedCount > 0
-          ? `${supportedFiles.length} Datei(en) werden hochgeladen. ${unsupportedCount} Datei(en) wurden übersprungen.`
-          : `${supportedFiles.length} Datei(en) werden hochgeladen.`,
-      type: unsupportedCount > 0 ? 'info' : 'success',
+          ? `${supportedFiles.length} Datei(en) werden geprüft. ${unsupportedCount} Datei(en) wurden übersprungen.`
+          : `${supportedFiles.length} Datei(en) werden geprüft.`,
+      type: 'info',
     });
 
-    nextItems.forEach(startUpload);
+    checkAndStartUploads(nextItems, guestId);
   }
 
   function handleInputChange(event) {
@@ -268,7 +401,7 @@ export default function UploadPage() {
           <h1>Fotos und Videos hochladen</h1>
           <p>
             Zieht eure Erinnerungen direkt hierher oder wählt mehrere Dateien
-            gleichzeitig aus. Bilder und Videos werden direkt hochgeladen.
+            gleichzeitig aus. Pro Upload sind maximal 20 Dateien möglich.
           </p>
         </div>
 
