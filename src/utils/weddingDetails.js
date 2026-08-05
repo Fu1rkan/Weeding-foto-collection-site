@@ -6,6 +6,28 @@ export const weddingDetails = {
   venueAddress: 'Rosenweg 12, 12345 Musterstadt',
 };
 
+export const dressCodeItems = [
+  {
+    title: 'Elegant & festlich',
+    description: 'Kommt so, dass ihr euch wohlfühlt und bereit seid zu feiern.',
+  },
+  {
+    title: 'Farben',
+    description: 'Warme Naturtöne, Pastellfarben und dezente Muster passen wunderbar.',
+  },
+  {
+    title: 'Bitte vermeiden',
+    description: 'Weiß bleibt an diesem Tag dem Brautpaar vorbehalten.',
+  },
+];
+
+export const contactInfo = {
+  name: 'Wedding Team',
+  email: 'hello@hochzeit-ms.de',
+  phone: '+49 123 456789',
+  note: 'Bei Fragen zur Anreise, zum Ablauf oder zur Webseite meldet euch gerne.',
+};
+
 export const timelineItems = [
   {
     time: '14:00',

@@ -4,6 +4,8 @@ import { useCountdown } from '../hooks/useCountdown.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { routes } from '../utils/routes.js';
 import {
+  contactInfo,
+  dressCodeItems,
   faqItems,
   galleryItems,
   timelineItems,
@@ -36,8 +38,8 @@ export default function HomePage() {
             <Link className="button-link" to={routes.upload}>
               Fotos & Videos hochladen
             </Link>
-            <a className="text-link" href="#zeitplan">
-              Zeitplan ansehen
+            <a className="text-link" href="#ablauf">
+              Ablauf ansehen
             </a>
           </div>
         </div>
@@ -58,10 +60,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-grid" id="zeitplan">
+      <section className="section-grid" id="ablauf">
         <div className="section-intro">
           <p className="eyebrow">Ablauf</p>
-          <h2>Zeitplan</h2>
+          <h2>Ablauf des Tages</h2>
           <p>Ein erster Überblick über die wichtigsten Momente des Tages.</p>
         </div>
         <div className="timeline">
@@ -91,6 +93,22 @@ export default function HomePage() {
 
       <section className="section-card">
         <div className="section-heading">
+          <p className="eyebrow">Dresscode</p>
+          <h2>Was ziehe ich an?</h2>
+          <p>Ein paar grobe Leitplanken, damit sich der Tag stimmig anfühlt.</p>
+        </div>
+        <div className="dresscode-grid">
+          {dressCodeItems.map((item) => (
+            <article className="dresscode-item" key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-heading">
           <p className="eyebrow">Galerie</p>
           <h2>Bildergalerie</h2>
           <p>Dummy-Vorschau für die späteren Erinnerungen der Gäste.</p>
@@ -102,6 +120,19 @@ export default function HomePage() {
               <h3>{item}</h3>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="section-grid contact-section">
+        <div className="section-intro">
+          <p className="eyebrow">Kontakt</p>
+          <h2>Habt ihr Fragen?</h2>
+          <p>{contactInfo.note}</p>
+        </div>
+        <div className="contact-card">
+          <h3>{contactInfo.name}</h3>
+          <a href={`mailto:${contactInfo.email}`}>{contactInfo.email}</a>
+          <a href={`tel:${contactInfo.phone.replaceAll(' ', '')}`}>{contactInfo.phone}</a>
         </div>
       </section>
 

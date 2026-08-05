@@ -173,7 +173,9 @@ h3 {
 .section-heading p,
 .content-card p:not(.eyebrow),
 .timeline-item p,
+.dresscode-item p,
 .faq-item p,
+.contact-card a,
 .site-footer p {
   color: #6c5d56;
   font-size: 1.05rem;
@@ -384,6 +386,47 @@ h3 {
   font-size: 1.35rem;
 }
 
+.dresscode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dresscode-item {
+  min-height: 12rem;
+  border-radius: 1.35rem;
+  background: #fff8f3;
+  padding: 1.25rem;
+}
+
+.dresscode-item p {
+  margin-top: 0.65rem;
+}
+
+.contact-card {
+  display: grid;
+  align-content: center;
+  gap: 0.8rem;
+  border-radius: 1.5rem;
+  background: #fff8f3;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.contact-card h3 {
+  color: #6c4a3e;
+  font-size: clamp(1.5rem, 4vw, 2.35rem);
+}
+
+.contact-card a {
+  width: fit-content;
+  font-weight: 800;
+}
+
+.contact-card a:hover {
+  color: #b46b5d;
+}
+
 .faq-list {
   display: grid;
   gap: 0.8rem;
@@ -439,6 +482,10 @@ h3 {
 
   .gallery-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dresscode-grid {
+    grid-template-columns: 1fr;
   }
 }
 
