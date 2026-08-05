@@ -3,4 +3,5 @@ export const routes = {
   guestAccess: '/zugang',
   upload: '/upload',
   gallery: '/galerie',
+  admin: '/admin',
 };

@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 import GalleryPage from './pages/GalleryPage.jsx';
 import GuestAccessPage from './pages/GuestAccessPage.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -12,6 +13,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="zugang" element={<GuestAccessPage />} />
+        <Route path="admin" element={<AdminPage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="upload" element={<UploadPage />} />
           <Route path="galerie" element={<GalleryPage />} />
