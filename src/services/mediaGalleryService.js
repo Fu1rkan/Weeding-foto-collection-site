@@ -37,9 +37,17 @@ function normalizeMediaDoc(docSnapshot) {
   };
 }
 
-export async function getGalleryMediaPage(cursor) {
+function matchesMediaFilter(item, mediaFilter) {
+  return mediaFilter === 'all' || item.mediaKind === mediaFilter;
+}
+
+export async function getGalleryMediaPage({
+  cursor,
+  mediaFilter = 'all',
+  sortOrder = 'desc',
+}) {
   const constraints = [
-    orderBy('uploadedAt', 'desc'),
+    orderBy('uploadedAt', sortOrder),
     limit(GALLERY_PAGE_SIZE),
   ];
 
@@ -52,7 +60,9 @@ export async function getGalleryMediaPage(cursor) {
   const lastDocument = snapshot.docs.at(-1) ?? null;
 
   return {
-    items: snapshot.docs.map(normalizeMediaDoc),
+    items: snapshot.docs
+      .map(normalizeMediaDoc)
+      .filter((item) => matchesMediaFilter(item, mediaFilter)),
     cursor: lastDocument,
     hasMore: snapshot.docs.length === GALLERY_PAGE_SIZE,
   };
