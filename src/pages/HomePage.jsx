@@ -8,6 +8,7 @@ import {
   dressCodeItems,
   faqItems,
   galleryItems,
+  locationItems,
   timelineItems,
   weddingDetails,
 } from '../utils/weddingDetails.js';
@@ -79,15 +80,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-grid location-section">
-        <div className="section-intro">
+      <section className="section-card location-section">
+        <div className="section-heading">
           <p className="eyebrow">Location</p>
           <h2>{weddingDetails.venueName}</h2>
           <p>{weddingDetails.venueAddress}</p>
         </div>
-        <div className="map-card" aria-label="Platzhalter für die Location-Karte">
-          <span>♡</span>
-          <p>Hier entsteht später die Kartenansicht zur Location.</p>
+        <div className="location-list" aria-label="Standorte der Hochzeit">
+          {locationItems.map((location) => {
+            const mapQuery = encodeURIComponent(location.mapQuery);
+
+            return (
+              <article className="location-card" key={location.name}>
+                <div className="location-info">
+                  <p className="location-time">{location.time}</p>
+                  <h3>{location.name}</h3>
+                </div>
+
+                <div className="location-map-panel">
+                  <iframe
+                    allowFullScreen
+                    className="location-map"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps?q=${mapQuery}&output=embed`}
+                    title={`Karte: ${location.name}`}
+                  />
+                  <a
+                    className="location-map-link"
+                    href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    In Maps öffnen
+                  </a>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
