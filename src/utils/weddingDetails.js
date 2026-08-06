@@ -1,23 +1,38 @@
 export const weddingDetails = {
-  coupleNames: 'M & S',
-  displayDate: '20. Juni 2027',
-  weddingDate: '2027-06-20T14:00:00+02:00',
-  venueName: 'Schlossgarten Villa Rosé',
-  venueAddress: 'Rosenweg 12, 12345 Musterstadt',
+  coupleNames: 'Marcel & Sophia',
+  displayDate: '22. August 2026',
+  weddingDate: '2026-08-22T11:00:00+02:00',
+  venueName: 'Unsere Locations',
+  venueAddress: 'Zwei Orte, ein gemeinsamer Tag.',
 };
+
+export const locationItems = [
+  {
+    mapQuery: 'Münch-Ferber-Villa',
+    name: 'Münch-Ferber-Villa',
+    time: '11:00 Uhr',
+  },
+  {
+    mapQuery: 'Taverne Kostas',
+    name: 'Taverne Kostas',
+    time: '13:00 Uhr',
+  },
+];
 
 export const dressCodeItems = [
   {
-    title: 'Elegant & festlich',
-    description: 'Kommt so, dass ihr euch wohlfühlt und bereit seid zu feiern.',
+    title: 'Fein & festlich',
+    description:
+      'Kommt fein und festlich gekleidet, so wie es sich für euch gut anfühlt.',
+  },
+  {
+    title: 'Ganz ihr selbst',
+    description: 'Euer Outfit darf zu euch passen. Hauptsache, ihr fühlt euch wohl.',
   },
   {
     title: 'Farben',
-    description: 'Warme Naturtöne, Pastellfarben und dezente Muster passen wunderbar.',
-  },
-  {
-    title: 'Bitte vermeiden',
-    description: 'Weiß bleibt an diesem Tag dem Brautpaar vorbehalten.',
+    description:
+      'Jede Farbe ist willkommen. Nur Weiß und Beige bleiben dem Brautpaar.',
   },
 ];
 
@@ -30,37 +45,32 @@ export const contactInfo = {
 
 export const timelineItems = [
   {
-    time: '14:00',
-    title: 'Ankommen',
-    description: 'Ein ruhiger Start mit Begrüßung und ersten gemeinsamen Fotos.',
+    time: '11:00',
+    title: 'Zusammenkunft',
+    description: 'Wir treffen uns vor der Münch-Ferber-Villa.',
   },
   {
-    time: '15:00',
+    time: '11:30',
     title: 'Trauung',
-    description: 'Der große Moment: Wir sagen Ja.',
+    description: 'Der große Moment: Marcel und Sophia sagen Ja.',
   },
   {
-    time: '16:30',
-    title: 'Sektempfang',
-    description: 'Anstoßen, lachen und den Nachmittag genießen.',
+    time: '13:00',
+    title: 'Treffpunkt Taverne Kostas',
+    description: 'Wir treffen uns in der Taverne Kostas und feiern gemeinsam weiter.',
   },
   {
-    time: '18:30',
-    title: 'Dinner',
-    description: 'Gemeinsames Essen mit Reden, Erinnerungen und viel Liebe.',
-  },
-  {
-    time: '21:00',
-    title: 'Party',
-    description: 'Musik, Tanz und die schönsten Momente des Abends.',
+    time: '18:00',
+    title: 'Hochzeitstanz',
+    description: 'Hochzeitstanz und Eröffnung der Tanzfläche.',
   },
 ];
 
 export const galleryItems = [
-  'Getting Ready',
+  'Münch-Ferber-Villa',
   'Trauung',
-  'Sektempfang',
-  'Dinner',
+  'Taverne Kostas',
+  'Hochzeitstanz',
   'Tanzfläche',
   'Highlights',
 ];
@@ -69,14 +79,15 @@ export const faqItems = [
   {
     question: 'Kann ich Fotos und Videos hochladen?',
     answer:
-      'Ja, der Upload-Bereich ist vorbereitet und wird in einem späteren Schritt vollständig angebunden.',
+      'Ja, nach Eingabe des Hochzeitscodes könnt ihr Fotos und Videos direkt hochladen.',
   },
   {
-    question: 'Brauche ich ein Benutzerkonto?',
-    answer: 'Nein, geplant ist ein gemeinsamer Hochzeitscode für alle Gäste.',
+    question: 'Wann beginnt die Hochzeit?',
+    answer: 'Wir treffen uns um 11:00 Uhr vor der Münch-Ferber-Villa.',
   },
   {
-    question: 'Wann ist die Galerie sichtbar?',
-    answer: 'Die Galerie wird später mit den hochgeladenen Erinnerungen gefüllt.',
+    question: 'Was gilt beim Dresscode?',
+    answer:
+      'Fein, festlich und ganz ihr selbst. Jede Farbe ist willkommen, nur Weiß und Beige bleiben dem Brautpaar.',
   },
 ];
