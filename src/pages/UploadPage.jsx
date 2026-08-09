@@ -5,6 +5,7 @@ import { calculateFileHash } from '../services/fileHashService.js';
 import { ensureAnonymousSession } from '../services/firebaseAuthService.js';
 import { getGuestId } from '../services/guestIdentityService.js';
 import { createVideoThumbnailForUpload } from '../services/videoThumbnailService.js';
+import { getVideoPreviewSource } from '../utils/videoPreviewUtils.js';
 import {
   createMediaUpload,
   DUPLICATE_FILE_HASH_ERROR_CODE,
@@ -57,6 +58,7 @@ function createUploadItem(optimizedFile) {
     status: 'queued',
     storagePath: '',
     thumbnailFile,
+    thumbnailPreviewUrl: thumbnailFile ? URL.createObjectURL(thumbnailFile) : '',
     wasCompressed,
   };
 }
@@ -439,6 +441,10 @@ export default function UploadPage() {
 
     nextItems.forEach((item) => {
       previewUrlsRef.current.add(item.previewUrl);
+
+      if (item.thumbnailPreviewUrl) {
+        previewUrlsRef.current.add(item.thumbnailPreviewUrl);
+      }
     });
 
     setUploadItems((currentItems) => [...nextItems, ...currentItems]);
@@ -534,7 +540,21 @@ export default function UploadPage() {
                     src={item.previewUrl}
                   />
                 ) : (
-                  <video controls muted preload="metadata" src={item.previewUrl} />
+                  item.thumbnailPreviewUrl ? (
+                    <img
+                      alt={`${item.fileName} Video-Cover`}
+                      decoding="async"
+                      loading="lazy"
+                      src={item.thumbnailPreviewUrl}
+                    />
+                  ) : (
+                    <video
+                      controls
+                      muted
+                      preload="metadata"
+                      src={getVideoPreviewSource(item.previewUrl)}
+                    />
+                  )
                 )}
               </div>
 

@@ -1,4 +1,5 @@
 const VIDEO_COVER_CAPTURE_TIME_SECONDS = 1;
+const VIDEO_COVER_LOAD_TIMEOUT_MS = 8000;
 const VIDEO_COVER_MAX_DIMENSION = 720;
 const VIDEO_COVER_QUALITY = 0.72;
 
@@ -54,7 +55,7 @@ function getVideoCaptureTime(duration) {
   return Math.min(VIDEO_COVER_CAPTURE_TIME_SECONDS, Math.max(0, duration - 0.05));
 }
 
-function waitForEvent(target, eventName) {
+function waitForEvent(target, eventName, timeoutMs = VIDEO_COVER_LOAD_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const handleSuccess = () => {
       cleanup();
@@ -65,13 +66,50 @@ function waitForEvent(target, eventName) {
       reject(new Error(`${eventName} failed.`));
     };
     const cleanup = () => {
+      clearTimeout(timeoutId);
       target.removeEventListener(eventName, handleSuccess);
       target.removeEventListener('error', handleError);
     };
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error(`${eventName} timed out.`));
+    }, timeoutMs);
 
     target.addEventListener(eventName, handleSuccess, { once: true });
     target.addEventListener('error', handleError, { once: true });
   });
+}
+
+function waitForVideoFrame(video, timeoutMs = VIDEO_COVER_LOAD_TIMEOUT_MS) {
+  return new Promise((resolve) => {
+    let isSettled = false;
+    const timeoutId = window.setTimeout(finish, timeoutMs);
+
+    function finish() {
+      if (isSettled) {
+        return;
+      }
+
+      isSettled = true;
+      clearTimeout(timeoutId);
+      resolve();
+    }
+
+    if ('requestVideoFrameCallback' in video) {
+      video.requestVideoFrameCallback(finish);
+      return;
+    }
+
+    window.requestAnimationFrame(finish);
+  });
+}
+
+async function waitForDecodedVideoFrame(video) {
+  if (video.readyState < 2) {
+    await waitForEvent(video, 'loadeddata');
+  }
+
+  await waitForVideoFrame(video);
 }
 
 function createVideoElement(file) {
@@ -81,7 +119,7 @@ function createVideoElement(file) {
 
     video.muted = true;
     video.playsInline = true;
-    video.preload = 'metadata';
+    video.preload = 'auto';
 
     video.addEventListener(
       'loadedmetadata',
@@ -106,15 +144,14 @@ function createVideoElement(file) {
 
 async function seekVideo(video, time) {
   if (time <= 0) {
-    if (video.readyState < 2) {
-      await waitForEvent(video, 'loadeddata');
-    }
+    await waitForDecodedVideoFrame(video);
     return;
   }
 
   const seekedPromise = waitForEvent(video, 'seeked');
   video.currentTime = time;
   await seekedPromise;
+  await waitForDecodedVideoFrame(video);
 }
 
 export async function createVideoThumbnailForUpload(file) {
@@ -129,7 +166,17 @@ export async function createVideoThumbnailForUpload(file) {
     const { video } = loadedVideo;
     objectUrl = loadedVideo.objectUrl;
 
-    await seekVideo(video, getVideoCaptureTime(video.duration));
+    const captureTime = getVideoCaptureTime(video.duration);
+
+    try {
+      await seekVideo(video, captureTime);
+    } catch (error) {
+      if (captureTime <= 0) {
+        throw error;
+      }
+
+      await seekVideo(video, 0);
+    }
 
     const targetDimensions = getTargetDimensions({
       height: video.videoHeight,

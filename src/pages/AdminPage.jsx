@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { VideoCover } from '../components/VideoCover.jsx';
 import { useAdminAccess } from '../hooks/useAdminAccess.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import {
@@ -262,7 +263,11 @@ export default function AdminPage() {
             <article className="admin-media-item" key={item.id}>
               <div className="admin-media-preview">
                 {item.mediaKind === 'video' ? (
-                  <video muted playsInline preload="none" src={item.downloadUrl} />
+                  <VideoCover
+                    downloadUrl={item.downloadUrl}
+                    fileName={item.fileName}
+                    thumbnailUrl={item.thumbnailUrl}
+                  />
                 ) : (
                   <img
                     alt={item.fileName}

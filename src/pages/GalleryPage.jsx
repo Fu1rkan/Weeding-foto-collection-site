@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { VideoCover } from '../components/VideoCover.jsx';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { getGalleryMediaPage } from '../services/mediaGalleryService.js';
@@ -17,13 +18,11 @@ const sortOptions = [
 function GalleryMedia({ item, isLightbox = false }) {
   if (item.mediaKind === 'video') {
     return (
-      <video
-        controls={isLightbox}
-        muted={!isLightbox}
-        playsInline
-        poster={item.thumbnailUrl || undefined}
-        preload={isLightbox ? 'metadata' : 'none'}
-        src={item.downloadUrl}
+      <VideoCover
+        downloadUrl={item.downloadUrl}
+        fileName={item.fileName}
+        isLightbox={isLightbox}
+        thumbnailUrl={item.thumbnailUrl}
       />
     );
   }
