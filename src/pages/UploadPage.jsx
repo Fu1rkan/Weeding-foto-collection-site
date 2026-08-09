@@ -4,6 +4,7 @@ import { usePageTitle } from '../hooks/usePageTitle.js';
 import { calculateFileHash } from '../services/fileHashService.js';
 import { ensureAnonymousSession } from '../services/firebaseAuthService.js';
 import { getGuestId } from '../services/guestIdentityService.js';
+import { createVideoThumbnailForUpload } from '../services/videoThumbnailService.js';
 import {
   createMediaUpload,
   DUPLICATE_FILE_HASH_ERROR_CODE,
@@ -64,7 +65,17 @@ async function optimizeFilesForUpload(files) {
   const optimizedFiles = [];
 
   for (const file of files) {
-    optimizedFiles.push(await optimizeImageForUpload(file));
+    const optimizedFile = await optimizeImageForUpload(file);
+
+    if (getMediaType(file) === 'video') {
+      optimizedFiles.push({
+        ...optimizedFile,
+        thumbnailFile: await createVideoThumbnailForUpload(file),
+      });
+      continue;
+    }
+
+    optimizedFiles.push(optimizedFile);
   }
 
   return optimizedFiles;

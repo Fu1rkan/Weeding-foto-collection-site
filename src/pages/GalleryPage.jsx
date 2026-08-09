@@ -21,6 +21,7 @@ function GalleryMedia({ item, isLightbox = false }) {
         controls={isLightbox}
         muted={!isLightbox}
         playsInline
+        poster={item.thumbnailUrl || undefined}
         preload={isLightbox ? 'metadata' : 'none'}
         src={item.downloadUrl}
       />
