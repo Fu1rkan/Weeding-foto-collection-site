@@ -1,9 +1,23 @@
 # Dependencies
 node_modules
 
+# Build output
+dist
+
 # Local secrets and machine-specific environment files
 .env
-.env.local
+.env.*
+!.env.example
+
+# Local media accidentally dropped into the project root
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.heic
+/*.mov
+/*.mp4
+/*.webm
 
 # Firebase local cache and debug logs
 .firebase
