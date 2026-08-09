@@ -252,6 +252,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
   border-radius: 999px;
   font-weight: 850;
   transition:
@@ -1004,6 +1005,7 @@ h3 {
 
 .secondary-button {
   width: fit-content;
+  max-width: 100%;
   border: 1px solid rgba(108, 74, 62, 0.18);
   border-radius: 999px;
   background: #fff8f3;
@@ -1038,6 +1040,7 @@ h3 {
 
 .danger-button {
   width: fit-content;
+  max-width: 100%;
   border: 1px solid rgba(143, 63, 50, 0.2);
   border-radius: 999px;
   background: rgba(180, 107, 93, 0.14);
@@ -1181,6 +1184,7 @@ h3 {
   flex-wrap: wrap;
   gap: 0.6rem;
   width: 100%;
+  min-width: 0;
   overflow: visible;
   transition:
     gap 320ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -1192,6 +1196,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  min-width: 0;
   transition: gap 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -2140,6 +2145,55 @@ h3 {
   }
 }
 
+@media (max-width: 560px) {
+  .site-header {
+    gap: 0.9rem;
+  }
+
+  .main-nav {
+    flex-wrap: wrap;
+    border-radius: 1.35rem;
+  }
+
+  .main-nav a {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+    text-align: center;
+  }
+
+  .admin-bulk-toolbar,
+  .admin-bulk-toolbar.is-compact {
+    justify-self: stretch;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .admin-bulk-actions,
+  .admin-bulk-toolbar.is-compact .admin-bulk-actions,
+  .admin-bulk-secondary-actions,
+  .admin-bulk-toolbar.is-compact .admin-bulk-secondary-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .admin-bulk-toolbar.is-compact .secondary-button:not(.admin-icon-button),
+  .admin-bulk-actions .secondary-button:not(.admin-icon-button),
+  .admin-bulk-actions .danger-button:not(.admin-icon-button) {
+    white-space: normal;
+  }
+
+  .gallery-controls {
+    min-width: 0;
+  }
+
+  .segmented-control,
+  .sort-control,
+  .sort-control select {
+    max-width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -2152,13 +2206,66 @@ h3 {
 }
 
 @media (max-width: 420px) {
+  .site-header {
+    gap: 0.8rem;
+  }
+
+  .brand {
+    width: 3rem;
+    height: 3rem;
+  }
+
   .main-nav {
+    flex-wrap: wrap;
     gap: 0.25rem;
+    border-radius: 1.35rem;
   }
 
   .main-nav a {
-    font-size: 0.85rem;
-    padding: 0.55rem 0.55rem;
+    flex: 1 1 calc(50% - 0.25rem);
+    font-size: 0.82rem;
+    padding: 0.55rem 0.45rem;
+  }
+
+  .page-container {
+    width: min(100% - 1.35rem, 1180px);
+    padding-bottom: 2.5rem;
+  }
+
+  .hero-section {
+    min-height: 30rem;
+    padding: 1.15rem;
+  }
+
+  .hero-section h1 {
+    font-size: clamp(3.45rem, 20vw, 4.75rem);
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 12vw, 3rem);
+  }
+
+  h2 {
+    font-size: clamp(1.85rem, 11vw, 2.55rem);
+  }
+
+  .hero-text,
+  .section-intro p,
+  .section-heading p,
+  .content-card p:not(.eyebrow),
+  .timeline-item p,
+  .dresscode-item p,
+  .faq-item p,
+  .contact-card a,
+  .site-footer p {
+    font-size: 0.98rem;
+  }
+
+  .section-card,
+  .section-grid,
+  .content-card,
+  .site-footer {
+    padding: 1.15rem;
   }
 
   .countdown-grid,
@@ -2166,20 +2273,150 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .countdown-card,
+  .timeline-item,
+  .dresscode-item,
+  .contact-card,
+  .faq-item,
+  .upload-item,
+  .admin-media-item {
+    border-radius: 1.05rem;
+  }
+
+  .timeline-item,
+  .faq-item {
+    padding: 0.9rem;
+  }
+
+  .location-card {
+    padding: 1rem;
+  }
+
+  .location-info {
+    gap: 0.85rem;
+    padding: 0.8rem;
+  }
+
+  .location-info h3 {
+    font-size: clamp(1.45rem, 9vw, 1.85rem);
+  }
+
+  .location-map-panel,
+  .location-map {
+    min-height: 12rem;
+  }
+
+  .location-map-link {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    font-size: 0.78rem;
+    padding: 0.55rem 0.7rem;
+  }
+
   .upload-title-row {
     flex-direction: column;
   }
 
+  .dropzone {
+    min-height: 15rem;
+    padding: 1rem;
+  }
+
+  .upload-preview,
+  .admin-media-preview-button {
+    min-height: 12rem;
+    height: 12rem;
+  }
+
+  .gallery-controls {
+    gap: 0.7rem;
+  }
+
+  .segmented-control {
+    border-radius: 1.2rem;
+  }
+
+  .segmented-control button {
+    flex: 1 1 100%;
+    padding: 0.6rem 0.75rem;
+  }
+
   .admin-stats-grid {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .admin-stat-pair .admin-stat-card {
+    padding: 0.85rem;
+  }
+
+  .admin-stat-pair .admin-stat-card span {
+    font-size: clamp(1.35rem, 7vw, 1.85rem);
+  }
+
+  .admin-stat-pair .admin-stat-card p {
+    font-size: 0.84rem;
+  }
+
+  .admin-bulk-toolbar,
+  .admin-bulk-toolbar.is-compact {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.6rem;
+  }
+
+  .admin-bulk-actions,
+  .admin-bulk-toolbar.is-compact .admin-bulk-actions,
+  .admin-bulk-secondary-actions,
+  .admin-bulk-toolbar.is-compact .admin-bulk-secondary-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .admin-bulk-actions .secondary-button:not(.admin-icon-button),
+  .admin-bulk-actions .danger-button:not(.admin-icon-button) {
+    padding: 0.62rem 0.85rem;
+  }
+
+  .admin-search {
+    padding: 0.85rem;
   }
 
   .admin-media-actions {
     width: 100%;
+    justify-content: center;
   }
 
-  .admin-media-actions .secondary-button:not(.admin-icon-button),
-  .admin-media-actions .danger-button:not(.admin-icon-button) {
+  .lightbox {
+    padding: 0.65rem;
+  }
+
+  .lightbox-close,
+  .lightbox-nav {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .lightbox-nav-prev {
+    left: 0.45rem;
+  }
+
+  .lightbox-nav-next {
+    right: 0.45rem;
+  }
+
+  .confirm-dialog {
+    padding: 1rem;
+  }
+
+  .confirm-dialog-actions {
+    justify-content: stretch;
+  }
+
+  .confirm-dialog-actions .secondary-button,
+  .confirm-dialog-actions .button-link,
+  .confirm-dialog-actions .danger-button {
     width: 100%;
   }
 }
