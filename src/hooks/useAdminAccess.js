@@ -1,32 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  grantAdminAccess,
-  hasAdminAccess,
-  isValidAdminCode,
+  hasStoredAdminAccess,
+  loginAdmin,
+  subscribeToAdminAccess,
 } from '../services/adminAccessService.js';
 
 export function useAdminAccess() {
-  const [isAuthenticated, setIsAuthenticated] = useState(hasAdminAccess);
+  const [isAuthenticated, setIsAuthenticated] = useState(hasStoredAdminAccess);
+  const [isChecking, setIsChecking] = useState(true);
 
-  function login(code) {
-    if (!isValidAdminCode(code)) {
-      return {
-        success: false,
-        message: 'Der eingegebene Admin-Code ist nicht korrekt.',
-      };
+  useEffect(() => {
+    const unsubscribe = subscribeToAdminAccess((hasAccess) => {
+      setIsAuthenticated(hasAccess);
+      setIsChecking(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  async function login(code) {
+    const result = await loginAdmin(code);
+
+    if (result.success) {
+      setIsAuthenticated(true);
     }
 
-    grantAdminAccess();
-    setIsAuthenticated(true);
-
-    return {
-      success: true,
-      message: '',
-    };
+    return result;
   }
 
   return {
     isAuthenticated,
+    isChecking,
     login,
   };
 }

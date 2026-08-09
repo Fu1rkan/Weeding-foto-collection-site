@@ -7,7 +7,8 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.get('admin', false) == true;
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     function isImageType(fileType) {
@@ -88,6 +89,11 @@ service cloud.firestore {
         && hasValidMediaFields()
         && request.resource.data.fileHash == mediaId;
       allow update, delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+      allow list, create, update, delete: if false;
     }
 
     match /{document=**} {

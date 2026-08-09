@@ -7,7 +7,8 @@ service firebase.storage {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.get('admin', false) == true;
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
     }
 
     function hasImageExtension(fileName) {
@@ -75,7 +76,7 @@ service firebase.storage {
 
     match /guest-uploads/thumbnails/{fileName} {
       allow get, list: if isSignedIn()
-        && (isAdmin() || isAllowedStoredThumbnail(fileName));
+        && (isAllowedStoredThumbnail(fileName) || isAdmin());
       allow create: if isSignedIn() && isAllowedThumbnailUpload(fileName);
       allow update: if false;
       allow delete: if isAdmin();
@@ -83,7 +84,7 @@ service firebase.storage {
 
     match /guest-uploads/{fileName} {
       allow get, list: if isSignedIn()
-        && (isAdmin() || isAllowedStoredImage(fileName) || isAllowedStoredVideo(fileName));
+        && (isAllowedStoredImage(fileName) || isAllowedStoredVideo(fileName) || isAdmin());
       allow create: if isSignedIn()
         && (isAllowedImageUpload(fileName) || isAllowedVideoUpload(fileName));
       allow update: if false;

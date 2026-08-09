@@ -1,5 +1,6 @@
 import { collection, deleteDoc, doc, getDocs, orderBy, query } from 'firebase/firestore';
 import { deleteObject, ref } from 'firebase/storage';
+import { ensureAdminSession } from './adminAccessService.js';
 import { db, storage } from './firebase.js';
 
 const MEDIA_COLLECTION = 'media';
@@ -32,6 +33,8 @@ function normalizeMediaDoc(docSnapshot) {
 }
 
 export async function getAdminMediaItems() {
+  await ensureAdminSession();
+
   const mediaQuery = query(
     collection(db, MEDIA_COLLECTION),
     orderBy('uploadedAt', 'desc'),
@@ -42,6 +45,8 @@ export async function getAdminMediaItems() {
 }
 
 export async function deleteMediaItem(item) {
+  await ensureAdminSession();
+
   if (item.downloadUrl) {
     const storageRef = ref(storage, item.downloadUrl);
 

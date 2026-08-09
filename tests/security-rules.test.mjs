@@ -46,6 +46,14 @@ function createBlob(contentType, size = 32) {
   return new Blob([new Uint8Array(size)], { type: contentType });
 }
 
+async function createAdminRecord(uid = 'admin-user') {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `admins/${uid}`), {
+      createdAt: serverTimestamp(),
+    });
+  });
+}
+
 before(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
@@ -157,8 +165,9 @@ describe('Firestore media rules', () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'media/existing'), mediaData());
     });
+    await createAdminRecord();
 
-    const admin = testEnv.authenticatedContext('admin-user', { admin: true });
+    const admin = testEnv.authenticatedContext('admin-user');
 
     await assertSucceeds(
       updateDoc(doc(admin.firestore(), 'media/existing'), {
@@ -264,9 +273,10 @@ describe('Storage guest upload rules', () => {
 
   it('blocks guest deletes but allows admin deletes', async () => {
     const guest = testEnv.authenticatedContext('guest-user');
-    const admin = testEnv.authenticatedContext('admin-user', { admin: true });
+    const admin = testEnv.authenticatedContext('admin-user');
     const fileRef = storageFile(guest, 'guest-uploads/photo.jpg');
 
+    await createAdminRecord();
     await assertSucceeds(uploadBytes(fileRef, createBlob('image/jpeg')));
     await assertFails(deleteObject(fileRef));
     await assertSucceeds(deleteObject(storageFile(admin, 'guest-uploads/photo.jpg')));

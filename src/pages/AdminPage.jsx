@@ -50,7 +50,7 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaItems, setMediaItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const { isAuthenticated, login } = useAdminAccess();
+  const { isAuthenticated, isChecking, login } = useAdminAccess();
 
   const filteredItems = useMemo(
     () => mediaItems.filter((item) => matchesSearch(item, searchTerm)),
@@ -97,10 +97,11 @@ export default function AdminPage() {
     loadMediaItems();
   }, [isAuthenticated]);
 
-  function handleAdminLogin(event) {
+  async function handleAdminLogin(event) {
     event.preventDefault();
 
-    const result = login(adminCode);
+    setErrorMessage('');
+    const result = await login(adminCode);
 
     if (!result.success) {
       setErrorMessage(result.message);
@@ -142,6 +143,15 @@ export default function AdminPage() {
     } finally {
       setDeletingId('');
     }
+  }
+
+  if (isChecking) {
+    return (
+      <div className="gallery-loading" aria-live="polite">
+        <span />
+        <p>Adminzugang wird geprüft...</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
