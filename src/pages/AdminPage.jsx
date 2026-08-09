@@ -613,22 +613,26 @@ export default function AdminPage() {
       </div>
 
       <div className="admin-stats-grid" aria-label="Upload-Statistiken">
-        <article className="admin-stat-card">
-          <span>{stats.totalUploads}</span>
-          <p>Anzahl Uploads</p>
-        </article>
-        <article className="admin-stat-card">
-          <span>{formatFileSize(stats.totalBytes)}</span>
-          <p>Speicherplatz</p>
-        </article>
-        <article className="admin-stat-card">
-          <span>{stats.imageCount}</span>
-          <p>Bilder</p>
-        </article>
-        <article className="admin-stat-card">
-          <span>{stats.videoCount}</span>
-          <p>Videos</p>
-        </article>
+        <div className="admin-stat-pair">
+          <article className="admin-stat-card">
+            <span>{stats.totalUploads}</span>
+            <p>Anzahl Uploads</p>
+          </article>
+          <article className="admin-stat-card">
+            <span>{formatFileSize(stats.totalBytes)}</span>
+            <p>Speicherplatz</p>
+          </article>
+        </div>
+        <div className="admin-stat-pair">
+          <article className="admin-stat-card">
+            <span>{stats.imageCount}</span>
+            <p>Bilder</p>
+          </article>
+          <article className="admin-stat-card">
+            <span>{stats.videoCount}</span>
+            <p>Videos</p>
+          </article>
+        </div>
       </div>
 
       <label className="admin-search" htmlFor="admin-search">

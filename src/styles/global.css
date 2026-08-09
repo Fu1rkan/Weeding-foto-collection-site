@@ -913,6 +913,8 @@ h3 {
 
 .status-pill {
   flex: 0 0 auto;
+  justify-self: start;
+  width: fit-content;
   border-radius: 999px;
   background: rgba(108, 74, 62, 0.1);
   color: #6c4a3e;
@@ -1078,6 +1080,10 @@ h3 {
   gap: 1rem;
 }
 
+.admin-stat-pair {
+  display: contents;
+}
+
 .admin-stat-card {
   border: 1px solid rgba(108, 74, 62, 0.12);
   border-radius: 1.35rem;
@@ -1219,6 +1225,10 @@ h3 {
   color: #fff8f3;
 }
 
+.admin-selection-toggle:not(.is-active) {
+  color: #332b27;
+}
+
 .admin-bulk-actions .secondary-button,
 .admin-media-actions .secondary-button {
   border-width: 3px;
@@ -1228,7 +1238,26 @@ h3 {
 .admin-bulk-actions .danger-button,
 .admin-media-actions .danger-button {
   border-width: 3px;
-  border-color: rgba(143, 63, 50, 0.22);
+  border-color: rgba(108, 74, 62, 0.2);
+  background: #fff8f3;
+  color: #332b27;
+}
+
+.admin-bulk-actions .secondary-button:hover:not(:disabled):not(.admin-selection-toggle),
+.admin-media-actions .secondary-button:hover:not(:disabled) {
+  border-color: #b46b5d;
+}
+
+.admin-selection-toggle:hover:not(:disabled):not(.is-active) {
+  border-color: #b46b5d;
+  color: #b46b5d;
+}
+
+.admin-bulk-actions .danger-button:hover:not(:disabled),
+.admin-media-actions .danger-button:hover:not(:disabled) {
+  border-color: #8f3f32;
+  background: rgba(180, 107, 93, 0.2);
+  color: #8f3f32;
 }
 
 .admin-icon-button {
@@ -1370,7 +1399,7 @@ h3 {
   overflow: hidden;
   border-radius: 1rem;
   background: #f4ded2;
-  cursor: zoom-in;
+  cursor: pointer;
   padding: 0;
   transition:
     box-shadow 180ms ease,
@@ -1893,6 +1922,43 @@ h3 {
 
   .page-container {
     padding-top: 1rem;
+  }
+
+  .admin-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stat-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid rgba(108, 74, 62, 0.12);
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 18px 54px rgba(108, 74, 62, 0.08);
+    overflow: hidden;
+    animation: fadeInUp 420ms ease backwards;
+  }
+
+  .admin-stat-pair .admin-stat-card {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 1rem;
+    animation: none;
+  }
+
+  .admin-stat-pair .admin-stat-card + .admin-stat-card {
+    border-left: 1px solid rgba(108, 74, 62, 0.12);
+  }
+
+  .admin-stat-pair .admin-stat-card span {
+    font-size: clamp(1.55rem, 8vw, 2.1rem);
+  }
+
+  .admin-stat-pair .admin-stat-card p {
+    margin-top: 0.35rem;
   }
 
   .hero-section {
