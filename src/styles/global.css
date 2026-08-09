@@ -303,19 +303,6 @@ h3 {
   background: rgba(255, 255, 255, 0.72);
   animation: fadeInUp 560ms ease backwards;
   box-shadow: 0 22px 70px rgba(108, 74, 62, 0.1);
-  transition:
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.section-card:hover,
-.section-grid:hover,
-.content-card:hover,
-.site-footer:hover {
-  border-color: rgba(180, 107, 93, 0.2);
-  box-shadow: 0 26px 78px rgba(108, 74, 62, 0.13);
-  transform: translateY(-3px);
 }
 
 .landing-page > *:nth-child(2) {
@@ -382,14 +369,6 @@ h3 {
   background: #fff8f3;
   padding: 1.1rem;
   text-align: center;
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.countdown-item:hover {
-  box-shadow: 0 14px 34px rgba(108, 74, 62, 0.1);
-  transform: translateY(-3px);
 }
 
 .countdown-item span {
@@ -644,14 +623,6 @@ h3 {
   border-radius: 1.35rem;
   background: #fff8f3;
   padding: 1.25rem;
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.dresscode-item:hover {
-  box-shadow: 0 14px 34px rgba(108, 74, 62, 0.1);
-  transform: translateY(-3px);
 }
 
 .dresscode-item p {
@@ -888,14 +859,6 @@ h3 {
   overflow: hidden;
   padding: 1rem;
   animation: fadeInUp 420ms ease backwards;
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.upload-item:hover {
-  box-shadow: 0 20px 58px rgba(108, 74, 62, 0.12);
-  transform: translateY(-3px);
 }
 
 .upload-preview {
@@ -1104,14 +1067,6 @@ h3 {
   box-shadow: 0 18px 54px rgba(108, 74, 62, 0.08);
   padding: 1.25rem;
   animation: fadeInUp 420ms ease backwards;
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.admin-stat-card:hover {
-  box-shadow: 0 20px 58px rgba(108, 74, 62, 0.12);
-  transform: translateY(-3px);
 }
 
 .admin-stat-card span {
@@ -1172,14 +1127,6 @@ h3 {
   box-shadow: 0 18px 54px rgba(108, 74, 62, 0.08);
   padding: 1rem;
   animation: fadeInUp 420ms ease backwards;
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.admin-media-item:hover {
-  box-shadow: 0 20px 58px rgba(108, 74, 62, 0.12);
-  transform: translateY(-3px);
 }
 
 .admin-media-preview {
@@ -1311,14 +1258,6 @@ h3 {
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 18px 54px rgba(108, 74, 62, 0.08);
   animation: fadeInUp 420ms ease backwards;
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.gallery-media-card:hover {
-  box-shadow: 0 22px 62px rgba(108, 74, 62, 0.13);
-  transform: translateY(-4px);
 }
 
 .gallery-media-button {
