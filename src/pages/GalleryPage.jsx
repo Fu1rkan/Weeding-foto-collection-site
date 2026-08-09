@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { getGalleryMediaPage } from '../services/mediaGalleryService.js';
-import { formatFileSize } from '../utils/fileUtils.js';
 
 const mediaFilterOptions = [
   { label: 'Alle', value: 'all' },
@@ -14,19 +13,6 @@ const sortOptions = [
   { label: 'Neueste zuerst', value: 'desc' },
   { label: 'Älteste zuerst', value: 'asc' },
 ];
-
-function formatUploadDate(uploadedAt) {
-  const date = uploadedAt?.toDate?.();
-
-  if (!date) {
-    return 'Gerade eben';
-  }
-
-  return new Intl.DateTimeFormat('de-DE', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
-}
 
 function GalleryMedia({ item, isLightbox = false }) {
   if (item.mediaKind === 'video') {
@@ -73,12 +59,34 @@ export default function GalleryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [mediaFilter, setMediaFilter] = useState('all');
   const [mediaItems, setMediaItems] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [sortOrder, setSortOrder] = useState('desc');
   const cursorRef = useRef(null);
   const hasMoreRef = useRef(true);
   const isLoadingRef = useRef(false);
   const sentinelRef = useRef(null);
+  const selectedItem = selectedIndex >= 0 ? mediaItems[selectedIndex] : null;
+  const hasLightboxNavigation = mediaItems.length > 1;
+
+  const showPreviousItem = useCallback(() => {
+    setSelectedIndex((currentIndex) => {
+      if (currentIndex < 0 || mediaItems.length === 0) {
+        return currentIndex;
+      }
+
+      return currentIndex === 0 ? mediaItems.length - 1 : currentIndex - 1;
+    });
+  }, [mediaItems.length]);
+
+  const showNextItem = useCallback(() => {
+    setSelectedIndex((currentIndex) => {
+      if (currentIndex < 0 || mediaItems.length === 0) {
+        return currentIndex;
+      }
+
+      return currentIndex === mediaItems.length - 1 ? 0 : currentIndex + 1;
+    });
+  }, [mediaItems.length]);
 
   const loadMore = useCallback(async ({ reset = false } = {}) => {
     if (isLoadingRef.current || (!reset && !hasMoreRef.current)) {
@@ -128,14 +136,27 @@ export default function GalleryPage() {
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
-        setSelectedItem(null);
+        setSelectedIndex(-1);
+        return;
+      }
+
+      if (!selectedItem) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        showPreviousItem();
+      }
+
+      if (event.key === 'ArrowRight') {
+        showNextItem();
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [selectedItem, showNextItem, showPreviousItem]);
 
   useInfiniteScroll({
     hasMore,
@@ -167,7 +188,7 @@ export default function GalleryPage() {
                 key={option.value}
                 onClick={() => {
                   setMediaFilter(option.value);
-                  setSelectedItem(null);
+                  setSelectedIndex(-1);
                 }}
                 type="button"
               >
@@ -183,7 +204,7 @@ export default function GalleryPage() {
               id="gallery-sort"
               onChange={(event) => {
                 setSortOrder(event.target.value);
-                setSelectedItem(null);
+                setSelectedIndex(-1);
               }}
               value={sortOrder}
             >
@@ -205,12 +226,12 @@ export default function GalleryPage() {
 
       {mediaItems.length > 0 && (
         <div className="masonry-gallery" aria-label="Hochgeladene Medien">
-          {mediaItems.map((item) => (
+          {mediaItems.map((item, index) => (
             <article className="gallery-media-card" key={item.id}>
               <button
                 aria-label={`${item.fileName} in Lightbox öffnen`}
                 className="gallery-media-button"
-                onClick={() => setSelectedItem(item)}
+                onClick={() => setSelectedIndex(index)}
                 type="button"
               >
                 <GalleryMedia item={item} />
@@ -218,13 +239,6 @@ export default function GalleryPage() {
                   <span className="video-badge">Video</span>
                 )}
               </button>
-
-              <div className="gallery-media-info">
-                <h3>{item.fileName}</h3>
-                <p>
-                  {formatFileSize(item.fileSize)} · {formatUploadDate(item.uploadedAt)}
-                </p>
-              </div>
             </article>
           ))}
         </div>
@@ -255,27 +269,40 @@ export default function GalleryPage() {
         <div
           aria-modal="true"
           className="lightbox"
-          onClick={() => setSelectedItem(null)}
+          onClick={() => setSelectedIndex(-1)}
           role="dialog"
         >
           <div className="lightbox-content" onClick={(event) => event.stopPropagation()}>
             <button
               aria-label="Lightbox schließen"
               className="lightbox-close"
-              onClick={() => setSelectedItem(null)}
+              onClick={() => setSelectedIndex(-1)}
               type="button"
             >
               ×
             </button>
+            {hasLightboxNavigation && (
+              <>
+                <button
+                  aria-label="Vorheriges Medium anzeigen"
+                  className="lightbox-nav lightbox-nav-prev"
+                  onClick={showPreviousItem}
+                  type="button"
+                >
+                  ‹
+                </button>
+                <button
+                  aria-label="Nächstes Medium anzeigen"
+                  className="lightbox-nav lightbox-nav-next"
+                  onClick={showNextItem}
+                  type="button"
+                >
+                  ›
+                </button>
+              </>
+            )}
             <div className="lightbox-media">
               <GalleryMedia item={selectedItem} isLightbox />
-            </div>
-            <div className="lightbox-caption">
-              <h3>{selectedItem.fileName}</h3>
-              <p>
-                {formatFileSize(selectedItem.fileSize)} ·{' '}
-                {formatUploadDate(selectedItem.uploadedAt)}
-              </p>
             </div>
           </div>
         </div>
