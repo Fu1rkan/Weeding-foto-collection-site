@@ -1251,21 +1251,28 @@ h3 {
 }
 
 .masonry-gallery {
-  column-count: 3;
-  column-gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(var(--masonry-column-count, 3), minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.masonry-column {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
 }
 
 .gallery-media-card {
-  display: inline-block;
+  display: block;
   width: 100%;
-  margin: 0 0 1rem;
+  margin: 0;
   overflow: hidden;
-  break-inside: avoid;
   border: 1px solid rgba(108, 74, 62, 0.12);
   border-radius: 1.35rem;
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 18px 54px rgba(108, 74, 62, 0.08);
-  animation: fadeInUp 420ms ease backwards;
+  animation: fadeIn 260ms ease backwards;
 }
 
 .gallery-media-button {
@@ -1277,6 +1284,8 @@ h3 {
   cursor: zoom-in;
   overflow: hidden;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .gallery-media-button img,
@@ -1286,16 +1295,23 @@ h3 {
   min-height: 12rem;
   max-height: 34rem;
   object-fit: cover;
-  transition: transform 360ms ease;
-}
-
-.gallery-media-button:hover img,
-.gallery-media-button:hover video {
-  transform: scale(1.025);
+  transform: translateZ(0);
 }
 
 .gallery-media-button video {
   aspect-ratio: 4 / 5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gallery-media-button img,
+  .gallery-media-button video {
+    transition: transform 360ms ease;
+  }
+
+  .gallery-media-button:hover img,
+  .gallery-media-button:hover video {
+    transform: scale(1.025);
+  }
 }
 
 .video-badge {
@@ -1558,10 +1574,6 @@ h3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .masonry-gallery {
-    column-count: 2;
-  }
-
   .admin-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1692,6 +1704,27 @@ h3 {
   }
 }
 
+@media (max-width: 640px) {
+  .masonry-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .masonry-column {
+    gap: 0.9rem;
+  }
+
+  .gallery-media-button {
+    aspect-ratio: 4 / 5;
+  }
+
+  .gallery-media-button img,
+  .gallery-media-button video {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1720,10 +1753,6 @@ h3 {
 
   .upload-title-row {
     flex-direction: column;
-  }
-
-  .masonry-gallery {
-    column-count: 1;
   }
 
   .admin-stats-grid {

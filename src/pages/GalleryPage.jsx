@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VideoCover } from '../components/VideoCover.jsx';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll.js';
+import { useMasonryColumns } from '../hooks/useMasonryColumns.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { getGalleryMediaPage } from '../services/mediaGalleryService.js';
 
@@ -43,7 +44,7 @@ function GalleryMedia({ item, isLightbox = false }) {
       sizes={
         isLightbox
           ? '100vw'
-          : '(max-width: 420px) calc(100vw - 2rem), (max-width: 900px) calc((100vw - 3rem) / 2), 380px'
+          : '(max-width: 640px) calc(100vw - 2rem), (max-width: 980px) calc((100vw - 3rem) / 2), 380px'
       }
       src={imageUrl}
       srcSet={responsiveSrcSet}
@@ -67,6 +68,7 @@ export default function GalleryPage() {
   const sentinelRef = useRef(null);
   const selectedItem = selectedIndex >= 0 ? mediaItems[selectedIndex] : null;
   const hasLightboxNavigation = mediaItems.length > 1;
+  const masonryColumns = useMasonryColumns(mediaItems);
 
   const showPreviousItem = useCallback(() => {
     setSelectedIndex((currentIndex) => {
@@ -225,21 +227,29 @@ export default function GalleryPage() {
       )}
 
       {mediaItems.length > 0 && (
-        <div className="masonry-gallery" aria-label="Hochgeladene Medien">
-          {mediaItems.map((item, index) => (
-            <article className="gallery-media-card" key={item.id}>
-              <button
-                aria-label={`${item.fileName} in Lightbox öffnen`}
-                className="gallery-media-button"
-                onClick={() => setSelectedIndex(index)}
-                type="button"
-              >
-                <GalleryMedia item={item} />
-                {item.mediaKind === 'video' && (
-                  <span className="video-badge">Video</span>
-                )}
-              </button>
-            </article>
+        <div
+          className="masonry-gallery"
+          style={{ '--masonry-column-count': masonryColumns.length }}
+          aria-label="Hochgeladene Medien"
+        >
+          {masonryColumns.map((column, columnIndex) => (
+            <div className="masonry-column" key={`gallery-column-${columnIndex}`}>
+              {column.map(({ item, index }) => (
+                <article className="gallery-media-card" key={item.id}>
+                  <button
+                    aria-label={`${item.fileName} in Lightbox öffnen`}
+                    className="gallery-media-button"
+                    onClick={() => setSelectedIndex(index)}
+                    type="button"
+                  >
+                    <GalleryMedia item={item} />
+                    {item.mediaKind === 'video' && (
+                      <span className="video-badge">Video</span>
+                    )}
+                  </button>
+                </article>
+              ))}
+            </div>
           ))}
         </div>
       )}
