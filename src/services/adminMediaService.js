@@ -4,6 +4,7 @@ import { ensureAdminSession } from './adminAccessService.js';
 import { db, storage } from './firebase.js';
 
 const MEDIA_COLLECTION = 'media';
+export const DOWNLOAD_CORS_ERROR_CODE = 'media/download-cors';
 
 function getMediaKind(fileType) {
   if (fileType?.startsWith('image/')) {
@@ -101,7 +102,21 @@ export async function downloadMediaItem(item) {
   await ensureAdminSession();
 
   const storageRef = ref(storage, item.downloadUrl);
-  const blob = await getBlob(storageRef);
+  let blob;
+
+  try {
+    blob = await getBlob(storageRef);
+  } catch (error) {
+    throw Object.assign(
+      new Error(
+        'Firebase Storage blockiert den Datei-Download per Browser wegen fehlender CORS-Konfiguration.',
+      ),
+      {
+        cause: error,
+        code: DOWNLOAD_CORS_ERROR_CODE,
+      },
+    );
+  }
 
   triggerBrowserDownload(blob, item.fileName);
 }

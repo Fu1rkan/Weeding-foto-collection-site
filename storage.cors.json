@@ -1,0 +1,15 @@
+[
+  {
+    "origin": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173",
+      "https://hochzeitswebseite-von-m-und-s.web.app",
+      "https://hochzeitswebseite-von-m-und-s.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Disposition"],
+    "maxAgeSeconds": 3600
+  }
+]

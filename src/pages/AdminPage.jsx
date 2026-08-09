@@ -8,6 +8,7 @@ import { VideoCover } from '../components/VideoCover.jsx';
 import { useAdminAccess } from '../hooks/useAdminAccess.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import {
+  DOWNLOAD_CORS_ERROR_CODE,
   deleteMediaItem,
   downloadMediaItems,
   getAdminMediaItems,
@@ -100,6 +101,18 @@ function getActionCopy(type, scope, count) {
     description: `Möchtest du wirklich ${scopeLabel} herunterladen? Je nach Browser können mehrere Downloads einzeln bestätigt werden müssen.`,
     title: isSingle ? 'Datei herunterladen?' : 'Dateien herunterladen?',
   };
+}
+
+function getActionErrorMessage(actionType, error) {
+  if (actionType === 'delete') {
+    return 'Nicht alle Dateien konnten gelöscht werden. Bitte prüfe Storage- und Firestore-Berechtigungen.';
+  }
+
+  if (error?.code === DOWNLOAD_CORS_ERROR_CODE) {
+    return 'Der Download wird von Firebase Storage blockiert. Bitte wende die Storage-CORS-Konfiguration an und versuche es danach erneut.';
+  }
+
+  return 'Nicht alle Dateien konnten heruntergeladen werden. Bitte versuche es erneut.';
 }
 
 function AdminMedia({ item, isLightbox = false }) {
@@ -535,7 +548,7 @@ export default function AdminPage() {
         });
       }
 
-    } catch {
+    } catch (error) {
       if (deletedIds.length > 0) {
         const deletedIdSet = new Set(deletedIds);
 
@@ -545,10 +558,7 @@ export default function AdminPage() {
       }
 
       setFeedback({
-        message:
-          action.type === 'delete'
-            ? 'Nicht alle Dateien konnten gelöscht werden. Bitte prüfe Storage- und Firestore-Berechtigungen.'
-            : 'Nicht alle Dateien konnten heruntergeladen werden. Bitte versuche es erneut.',
+        message: getActionErrorMessage(action.type, error),
         type: 'error',
       });
     } finally {
