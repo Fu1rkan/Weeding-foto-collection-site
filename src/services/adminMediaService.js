@@ -1,5 +1,5 @@
 import { collection, deleteDoc, doc, getDocs, orderBy, query } from 'firebase/firestore';
-import { deleteObject, ref } from 'firebase/storage';
+import { deleteObject, getBlob, ref } from 'firebase/storage';
 import { ensureAdminSession } from './adminAccessService.js';
 import { db, storage } from './firebase.js';
 
@@ -30,6 +30,29 @@ function normalizeMediaDoc(docSnapshot) {
     thumbnailUrl: data.thumbnailUrl,
     uploadedAt: data.uploadedAt,
   };
+}
+
+function triggerBrowserDownload(blob, fileName) {
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = objectUrl;
+  link.download = fileName || 'hochzeit-download';
+  link.style.display = 'none';
+
+  document.body.append(link);
+  link.click();
+  link.remove();
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(objectUrl);
+  }, 1000);
+}
+
+function waitBetweenDownloads() {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, 250);
+  });
 }
 
 export async function getAdminMediaItems() {
@@ -72,4 +95,24 @@ export async function deleteMediaItem(item) {
   }
 
   await deleteDoc(doc(db, MEDIA_COLLECTION, item.id));
+}
+
+export async function downloadMediaItem(item) {
+  await ensureAdminSession();
+
+  const storageRef = ref(storage, item.downloadUrl);
+  const blob = await getBlob(storageRef);
+
+  triggerBrowserDownload(blob, item.fileName);
+}
+
+export async function downloadMediaItems(items, onProgress) {
+  for (const [index, item] of items.entries()) {
+    await downloadMediaItem(item);
+    onProgress?.(index + 1, items.length);
+
+    if (index < items.length - 1) {
+      await waitBetweenDownloads();
+    }
+  }
 }
