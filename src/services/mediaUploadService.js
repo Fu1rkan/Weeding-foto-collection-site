@@ -15,6 +15,7 @@ import {
   uploadBytesResumable,
 } from 'firebase/storage';
 import { db, storage } from './firebase.js';
+import { ensureAnonymousSession } from './firebaseAuthService.js';
 
 const MEDIA_COLLECTION = 'media';
 const UPLOAD_DIRECTORY = 'guest-uploads';
@@ -58,7 +59,9 @@ function createThumbnailPath(file, fileHash) {
   return `${UPLOAD_DIRECTORY}/thumbnails/${fileHash}-${safeFileName}.webp`;
 }
 
-export function createMediaUpload(file, fileHash) {
+export async function createMediaUpload(file, fileHash) {
+  await ensureAnonymousSession();
+
   const storagePath = createUploadPath(file, fileHash);
   const storageRef = ref(storage, storagePath);
   const uploadTask = uploadBytesResumable(storageRef, file, {
@@ -74,6 +77,8 @@ export function createMediaUpload(file, fileHash) {
 }
 
 export async function uploadMediaThumbnail(file, fileHash) {
+  await ensureAnonymousSession();
+
   const thumbnailPath = createThumbnailPath(file, fileHash);
   const thumbnailRef = ref(storage, thumbnailPath);
   const snapshot = await uploadBytes(thumbnailRef, file, {
@@ -85,12 +90,16 @@ export async function uploadMediaThumbnail(file, fileHash) {
 }
 
 export async function hasExistingFileHash(fileHash) {
+  await ensureAnonymousSession();
+
   const mediaDoc = await getDoc(doc(db, MEDIA_COLLECTION, fileHash));
 
   return mediaDoc.exists();
 }
 
 export async function getGuestUploadCountLast24Hours(guestId) {
+  await ensureAnonymousSession();
+
   const uploadsQuery = query(
     collection(db, MEDIA_COLLECTION),
     where('guestId', '==', guestId),
@@ -105,13 +114,15 @@ export async function getGuestUploadCountLast24Hours(guestId) {
   }).length;
 }
 
-export function saveMediaMetadata({
+export async function saveMediaMetadata({
   downloadUrl,
   file,
   fileHash,
   guestId,
   thumbnailUrl,
 }) {
+  await ensureAnonymousSession();
+
   const mediaRef = doc(db, MEDIA_COLLECTION, fileHash);
 
   return runTransaction(db, async (transaction) => {

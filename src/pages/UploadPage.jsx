@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { optimizeImageForUpload } from '../services/imageCompressionService.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { calculateFileHash } from '../services/fileHashService.js';
+import { ensureAnonymousSession } from '../services/firebaseAuthService.js';
 import { getGuestId } from '../services/guestIdentityService.js';
 import {
   createMediaUpload,
@@ -89,6 +90,14 @@ function getMetadataErrorMessage(error) {
   return 'Datei wurde hochgeladen, aber die Informationen konnten nicht in Firestore gespeichert werden.';
 }
 
+function getQuotaErrorMessage(error) {
+  if (error.code === 'permission-denied') {
+    return 'Das Upload-Kontingent konnte nicht geprüft werden. Bitte melde dich erneut über den Gästecode an. Falls das erneut passiert, müssen die Firebase-Regeln veröffentlicht werden.';
+  }
+
+  return 'Das Upload-Kontingent konnte nicht geprüft werden. Bitte lade die Seite neu oder melde dich erneut über den Gästecode an.';
+}
+
 export default function UploadPage() {
   usePageTitle('Upload');
 
@@ -112,11 +121,26 @@ export default function UploadPage() {
   }, []);
 
   const startUpload = useCallback(
-    (item) => {
-      const { getDownloadUrl, storagePath, uploadTask } = createMediaUpload(
-        item.file,
-        item.fileHash,
-      );
+    async (item) => {
+      let mediaUpload;
+
+      try {
+        mediaUpload = await createMediaUpload(item.file, item.fileHash);
+      } catch {
+        updateUploadItem(item.id, {
+          message:
+            'Firebase konnte den Gästezugang nicht vorbereiten. Bitte lade die Seite neu oder melde dich erneut an.',
+          status: 'error',
+        });
+
+        setFeedback({
+          message: `${item.fileName} konnte nicht hochgeladen werden, weil der Gästezugang nicht bereit ist.`,
+          type: 'error',
+        });
+        return;
+      }
+
+      const { getDownloadUrl, storagePath, uploadTask } = mediaUpload;
 
       updateUploadItem(item.id, {
         message: 'Upload wurde gestartet.',
@@ -283,7 +307,7 @@ export default function UploadPage() {
           });
 
           startedCount += 1;
-          startUpload(preparedItem);
+          void startUpload(preparedItem);
         } catch {
           blockedCount += 1;
           updateUploadItem(item.id, {
@@ -362,11 +386,11 @@ export default function UploadPage() {
     let uploadedInLast24Hours = 0;
 
     try {
+      await ensureAnonymousSession();
       uploadedInLast24Hours = await getGuestUploadCountLast24Hours(guestId);
-    } catch {
+    } catch (error) {
       setFeedback({
-        message:
-          'Das Upload-Kontingent konnte nicht geprüft werden. Bitte lade die Seite neu oder melde dich erneut über den Gästecode an.',
+        message: getQuotaErrorMessage(error),
         type: 'error',
       });
       return;
