@@ -37,9 +37,9 @@ export const dressCodeItems = [
 ];
 
 export const contactInfo = {
-  name: 'Wedding Team',
-  email: 'hello@hochzeit-ms.de',
-  phone: '+49 123 456789',
+  name: 'Marcel Konietzko',
+  email: 'Marcel10398@web.de',
+  phone: '+49 15566 700509',
   note: 'Bei Fragen zur Anreise, zum Ablauf oder zur Webseite meldet euch gerne.',
 };
 
