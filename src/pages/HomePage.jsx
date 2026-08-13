@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer.jsx';
 import coupleSignature from '../assets/marcel-sophia-signature.png';
@@ -17,6 +18,8 @@ import {
 export default function HomePage() {
   usePageTitle('Start');
 
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const faqListRef = useRef(null);
   const countdown = useCountdown(weddingDetails.weddingDate);
   const countdownItems = [
     { label: 'Tage', value: countdown.days },
@@ -24,6 +27,20 @@ export default function HomePage() {
     { label: 'Minuten', value: countdown.minutes },
     { label: 'Sekunden', value: countdown.seconds },
   ];
+
+  useEffect(() => {
+    const handleOutsideTap = (event) => {
+      if (!faqListRef.current?.contains(event.target)) {
+        setOpenFaqIndex(null);
+      }
+    };
+
+    document.addEventListener('pointerdown', handleOutsideTap);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideTap);
+    };
+  }, []);
 
   return (
     <div className="landing-page">
@@ -66,6 +83,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/*
       <section className="section-grid" id="ablauf">
         <div className="section-intro">
           <p className="eyebrow">Ablauf</p>
@@ -84,6 +102,7 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      */}
 
       <section className="section-card location-section">
         <div className="section-heading">
@@ -176,13 +195,28 @@ export default function HomePage() {
           <p className="eyebrow">FAQ</p>
           <h2>Fragen & Antworten</h2>
         </div>
-        <div className="faq-list">
-          {faqItems.map((item) => (
-            <details className="faq-item" key={item.question}>
-              <summary>{item.question}</summary>
-              <p>{item.answer}</p>
-            </details>
-          ))}
+        <div className="faq-list" ref={faqListRef}>
+          {faqItems.map((item, index) => {
+            const isOpen = openFaqIndex === index;
+            const answerId = `faq-answer-${index}`;
+
+            return (
+              <article className={`faq-item${isOpen ? ' is-open' : ''}`} key={item.question}>
+                <button
+                  aria-controls={answerId}
+                  aria-expanded={isOpen}
+                  className="faq-question"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                  type="button"
+                >
+                  {item.question}
+                </button>
+                <p hidden={!isOpen} id={answerId}>
+                  {item.answer}
+                </p>
+              </article>
+            );
+          })}
         </div>
       </section>
 

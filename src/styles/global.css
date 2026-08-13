@@ -671,10 +671,30 @@ h3 {
   transform: translateY(-2px);
 }
 
-.faq-item summary {
+.faq-question {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
   cursor: pointer;
   color: #3a302c;
+  font: inherit;
   font-weight: 850;
+  text-align: left;
+}
+
+.faq-question::before {
+  display: inline-block;
+  color: #6c4a3e;
+  content: "▸";
+  font-size: 0.85rem;
+  transition: transform 180ms ease;
+}
+
+.faq-item.is-open .faq-question::before {
+  transform: rotate(90deg);
 }
 
 .faq-item p {

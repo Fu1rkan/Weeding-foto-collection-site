@@ -77,17 +77,18 @@ export const galleryItems = [
 
 export const faqItems = [
   {
-    question: 'Kann ich Fotos und Videos hochladen?',
+    question: 'Wie kann ich Fotos und Videos hochladen?',
     answer:
-      'Ja, nach Eingabe des Hochzeitscodes könnt ihr Fotos und Videos direkt hochladen.',
+      'Klickt auf „Fotos & Videos hochladen“, gebt den Hochzeitscode ein und wählt anschließend eure Bilder oder Videos aus. Ihr könnt auch mehrere Dateien gleichzeitig hochladen.',
   },
   {
-    question: 'Wann beginnt die Hochzeit?',
-    answer: 'Wir treffen uns um 11:00 Uhr vor der Münch-Ferber-Villa.',
+    question: 'Wo finde ich den Code?',
+    answer:
+      'Den Hochzeitscode bekommt ihr vom Brautpaar oder findet ihn auf den Hinweisen vor Ort, zum Beispiel beim QR-Code.',
   },
   {
-    question: 'Was gilt beim Dresscode?',
+    question: 'Werden meine Daten gespeichert?',
     answer:
-      'Fein, festlich und ganz ihr selbst. Jede Farbe ist willkommen, nur Weiß und Beige bleiben dem Brautpaar.',
+      'Es werden keine Benutzerkonten erstellt. Beim Upload werden nur die Datei und die nötigen Informationen gespeichert, damit die Galerie funktioniert: Dateiname, Dateityp, Dateigröße, Uploadzeit und Download-URL.',
   },
 ];
