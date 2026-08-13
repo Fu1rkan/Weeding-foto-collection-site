@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Footer from '../components/Footer.jsx';
+import coupleSignature from '../assets/marcel-sophia-signature.png';
 import { useCountdown } from '../hooks/useCountdown.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { routes } from '../utils/routes.js';
@@ -29,7 +30,11 @@ export default function HomePage() {
       <section className="hero-section">
         <div className="hero-content">
           <p className="eyebrow">Wir feiern Liebe</p>
-          <h1>{weddingDetails.coupleNames}</h1>
+          <img
+            className="hero-signature"
+            src={coupleSignature}
+            alt={weddingDetails.coupleNames}
+          />
           <p className="wedding-date">{weddingDetails.displayDate}</p>
           <p className="hero-text">
             Teilt eure schönsten Fotos und Videos mit dem Brautpaar und sammelt

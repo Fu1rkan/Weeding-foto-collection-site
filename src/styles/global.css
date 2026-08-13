@@ -54,35 +54,12 @@ p {
 .site-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1.5rem;
   width: min(100% - 2rem, 1180px);
   margin: 0 auto;
   animation: fadeInDown 520ms ease backwards;
   padding: 1.25rem 0;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  border: 1px solid rgba(108, 74, 62, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #6c4a3e;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  box-shadow: 0 14px 34px rgba(108, 74, 62, 0.08);
-  transition:
-    box-shadow 220ms ease,
-    transform 220ms ease;
-}
-
-.brand:hover {
-  box-shadow: 0 18px 44px rgba(108, 74, 62, 0.13);
-  transform: translateY(-2px) rotate(-2deg);
 }
 
 .main-nav {
@@ -199,6 +176,16 @@ h1 {
 .hero-section h1 {
   color: #fff8f3;
   font-size: clamp(4.75rem, 16vw, 10rem);
+}
+
+.hero-signature {
+  display: block;
+  width: min(100%, 44rem);
+  height: auto;
+  margin: clamp(0.8rem, 2vw, 1.2rem) 0 clamp(1rem, 2vw, 1.6rem);
+  object-fit: contain;
+  object-position: left center;
+  filter: brightness(0) invert(1) drop-shadow(0 12px 28px rgba(45, 34, 30, 0.16));
 }
 
 h2 {
@@ -2210,11 +2197,6 @@ h3 {
     gap: 0.8rem;
   }
 
-  .brand {
-    width: 3rem;
-    height: 3rem;
-  }
-
   .main-nav {
     flex-wrap: wrap;
     gap: 0.25rem;
@@ -2237,8 +2219,9 @@ h3 {
     padding: 1.15rem;
   }
 
-  .hero-section h1 {
-    font-size: clamp(3.45rem, 20vw, 4.75rem);
+  .hero-signature {
+    width: min(100%, 19rem);
+    max-height: 12rem;
   }
 
   h1 {
