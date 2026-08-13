@@ -466,8 +466,10 @@ h3 {
   align-content: center;
   justify-items: start;
   gap: 1.2rem;
+  width: fit-content;
   min-height: 0;
   min-width: 0;
+  max-width: 100%;
   padding: clamp(0.5rem, 2vw, 1.25rem) clamp(1rem, 3vw, 2rem);
   z-index: 1;
 }
@@ -485,11 +487,11 @@ h3 {
 
 .location-info::after {
   display: block;
-  width: 8rem;
+  width: 100%;
   margin-top: -0.15rem;
   background:
-    linear-gradient(rgba(180, 107, 93, 0.16), rgba(180, 107, 93, 0.16)) left 50% / 3.2rem 1px no-repeat,
-    linear-gradient(rgba(180, 107, 93, 0.16), rgba(180, 107, 93, 0.16)) right 50% / 3.2rem 1px no-repeat;
+    linear-gradient(rgba(180, 107, 93, 0.16), rgba(180, 107, 93, 0.16)) left 50% / calc(50% - 0.45rem) 1px no-repeat,
+    linear-gradient(rgba(180, 107, 93, 0.16), rgba(180, 107, 93, 0.16)) right 50% / calc(50% - 0.45rem) 1px no-repeat;
   color: rgba(180, 107, 93, 0.36);
   content: "♥";
   font-size: 0.8rem;
@@ -644,12 +646,39 @@ h3 {
 }
 
 .contact-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   width: fit-content;
+  color: #6c4a3e;
   font-weight: 800;
 }
 
 .contact-card a:hover {
   color: #b46b5d;
+}
+
+.contact-link-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  background: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.contact-link-icon-email {
+  mask-image: url("../assets/icons/contact-email.svg");
+  -webkit-mask-image: url("../assets/icons/contact-email.svg");
+}
+
+.contact-link-icon-phone {
+  mask-image: url("../assets/icons/contact-phone.svg");
+  -webkit-mask-image: url("../assets/icons/contact-phone.svg");
 }
 
 .faq-list {
@@ -817,6 +846,7 @@ h3 {
 }
 
 .dropzone-icon {
+  position: relative;
   display: grid;
   place-items: center;
   width: 4rem;
@@ -825,9 +855,24 @@ h3 {
   border-radius: 999px;
   background: #b46b5d;
   color: #fff8f3;
-  font-size: 2rem;
-  font-weight: 800;
   animation: softPulse 2400ms ease-in-out infinite;
+}
+
+.dropzone-icon::before,
+.dropzone-icon::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1.05rem;
+  height: 0.24rem;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.dropzone-icon::after {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .dropzone strong {
@@ -2301,7 +2346,7 @@ h3 {
   }
 
   .location-info h3 {
-    font-size: clamp(1.45rem, 9vw, 1.85rem);
+    font-size: clamp(1.2rem, 6.6vw, 1.45rem);
   }
 
   .location-map-panel,

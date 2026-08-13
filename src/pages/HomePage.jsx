@@ -21,8 +21,20 @@ export default function HomePage() {
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const faqListRef = useRef(null);
   const countdown = useCountdown(weddingDetails.weddingDate);
+  const countdownTitle = countdown.isAfterWeddingDay
+    ? 'Seit der Hochzeit'
+    : countdown.isWeddingDay
+      ? 'Heute ist die Hochzeit'
+      : 'Bis zur Hochzeit';
+  const countdownEyebrow = countdown.isAfterWeddingDay
+    ? 'Wie lange ist es her?'
+    : countdown.isWeddingDay
+      ? 'Heute feiern wir'
+      : 'Countdown';
+  const shouldShowLandingGallery =
+    countdown.isAfterWeddingDay && weddingDetails.showLandingGallery;
   const countdownItems = [
-    { label: 'Tage', value: countdown.days },
+    { label: countdown.isAfterWeddingDay ? 'Tage danach' : 'Tage', value: countdown.days },
     { label: 'Stunden', value: countdown.hours },
     { label: 'Minuten', value: countdown.minutes },
     { label: 'Sekunden', value: countdown.seconds },
@@ -61,17 +73,19 @@ export default function HomePage() {
             <Link className="button-link" to={routes.upload}>
               Fotos & Videos hochladen
             </Link>
+            {/*
             <a className="text-link" href="#ablauf">
               Ablauf ansehen
             </a>
+            */}
           </div>
         </div>
       </section>
 
       <section className="section-card countdown-section" aria-labelledby="countdown-title">
         <div>
-          <p className="eyebrow">Countdown</p>
-          <h2 id="countdown-title">Bis zur Hochzeit</h2>
+          <p className="eyebrow">{countdownEyebrow}</p>
+          <h2 id="countdown-title">{countdownTitle}</h2>
         </div>
         <div className="countdown-grid">
           {countdownItems.map((item) => (
@@ -161,21 +175,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-card">
-        <div className="section-heading">
-          <p className="eyebrow">Galerie</p>
-          <h2>Bildergalerie</h2>
-          <p>Dummy-Vorschau für die späteren Erinnerungen der Gäste.</p>
-        </div>
-        <div className="gallery-grid">
-          {galleryItems.map((item, index) => (
-            <article className="gallery-tile" key={item}>
-              <span>0{index + 1}</span>
-              <h3>{item}</h3>
-            </article>
-          ))}
-        </div>
-      </section>
+      {shouldShowLandingGallery && (
+        <section className="section-card">
+          <div className="section-heading">
+            <p className="eyebrow">Galerie</p>
+            <h2>Bildergalerie</h2>
+            <p>Dummy-Vorschau für die Erinnerungen der Gäste.</p>
+          </div>
+          <div className="gallery-grid">
+            {galleryItems.map((item, index) => (
+              <article className="gallery-tile" key={item}>
+                <span>0{index + 1}</span>
+                <h3>{item}</h3>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="section-grid contact-section">
         <div className="section-intro">
@@ -185,8 +201,20 @@ export default function HomePage() {
         </div>
         <div className="contact-card">
           <h3>{contactInfo.name}</h3>
-          <a href={`mailto:${contactInfo.email}`}>{contactInfo.email}</a>
-          <a href={`tel:${contactInfo.phone.replaceAll(' ', '')}`}>{contactInfo.phone}</a>
+          <a
+            className="contact-link"
+            href={`mailto:${contactInfo.email}`}
+          >
+            <span aria-hidden="true" className="contact-link-icon contact-link-icon-email" />
+            <span>{contactInfo.email}</span>
+          </a>
+          <a
+            className="contact-link"
+            href={`tel:${contactInfo.phone.replaceAll(' ', '')}`}
+          >
+            <span aria-hidden="true" className="contact-link-icon contact-link-icon-phone" />
+            <span>{contactInfo.phone}</span>
+          </a>
         </div>
       </section>
 

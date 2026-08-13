@@ -515,7 +515,7 @@ export default function UploadPage() {
             onChange={handleInputChange}
             type="file"
           />
-          <span className="dropzone-icon">+</span>
+          <span aria-hidden="true" className="dropzone-icon" />
           <strong>Dateien hier ablegen</strong>
           <p>oder klicken, um Bilder und Videos auszuwählen</p>
         </label>

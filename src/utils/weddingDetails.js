@@ -1,9 +1,10 @@
 export const weddingDetails = {
-  coupleNames: 'Marcel & Sophia',
+  coupleNames: 'Sophia & Marcel',
   displayDate: '22. August 2026',
   weddingDate: '2026-08-22T11:00:00+02:00',
   venueName: 'Unsere Locations',
   venueAddress: 'Zwei Orte, ein gemeinsamer Tag.',
+  showLandingGallery: false,
 };
 
 export const locationItems = [
@@ -52,7 +53,7 @@ export const timelineItems = [
   {
     time: '11:30',
     title: 'Trauung',
-    description: 'Der große Moment: Marcel und Sophia sagen Ja.',
+    description: 'Der große Moment: Sophia und Marcel sagen Ja.',
   },
   {
     time: '13:00',
