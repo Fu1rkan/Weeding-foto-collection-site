@@ -58,6 +58,7 @@ export default function GalleryPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [mediaFilter, setMediaFilter] = useState('all');
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -66,7 +67,10 @@ export default function GalleryPage() {
   const hasMoreRef = useRef(true);
   const isLoadingRef = useRef(false);
   const sentinelRef = useRef(null);
+  const sortMenuRef = useRef(null);
   const selectedItem = selectedIndex >= 0 ? mediaItems[selectedIndex] : null;
+  const selectedSortOption =
+    sortOptions.find((option) => option.value === sortOrder) ?? sortOptions[0];
   const hasLightboxNavigation = mediaItems.length > 1;
   const masonryColumns = useMasonryColumns(mediaItems);
 
@@ -160,6 +164,32 @@ export default function GalleryPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedItem, showNextItem, showPreviousItem]);
 
+  useEffect(() => {
+    if (!isSortMenuOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event) {
+      if (!sortMenuRef.current?.contains(event.target)) {
+        setIsSortMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setIsSortMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSortMenuOpen]);
+
   useInfiniteScroll({
     hasMore,
     isEnabled: !errorMessage,
@@ -199,24 +229,49 @@ export default function GalleryPage() {
             ))}
           </div>
 
-          <label className="sort-control" htmlFor="gallery-sort">
-            Sortierung
-            <select
+          <div
+            className={`sort-control${isSortMenuOpen ? ' is-open' : ''}`}
+            ref={sortMenuRef}
+          >
+            <span id="gallery-sort-label">Sortierung</span>
+            <button
+              aria-expanded={isSortMenuOpen}
+              aria-haspopup="listbox"
+              aria-labelledby="gallery-sort-label gallery-sort-value"
+              className="sort-trigger"
               disabled={isLoading}
-              id="gallery-sort"
-              onChange={(event) => {
-                setSortOrder(event.target.value);
-                setSelectedIndex(-1);
-              }}
-              value={sortOrder}
+              onClick={() => setIsSortMenuOpen((currentValue) => !currentValue)}
+              type="button"
+            >
+              <span id="gallery-sort-value">{selectedSortOption.label}</span>
+            </button>
+
+            <div
+              aria-labelledby="gallery-sort-label"
+              className="sort-menu"
+              role="listbox"
             >
               {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+                <button
+                  aria-selected={sortOrder === option.value}
+                  className={`sort-option${
+                    sortOrder === option.value ? ' is-active' : ''
+                  }`}
+                  disabled={isLoading}
+                  key={option.value}
+                  onClick={() => {
+                    setSortOrder(option.value);
+                    setSelectedIndex(-1);
+                    setIsSortMenuOpen(false);
+                  }}
+                  role="option"
+                  type="button"
+                >
                   {option.label}
-                </option>
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -269,10 +324,8 @@ export default function GalleryPage() {
         </div>
       )}
 
-      <div ref={sentinelRef} className="scroll-sentinel" aria-hidden="true" />
-
-      {!hasMore && mediaItems.length > 0 && (
-        <p className="gallery-end">Ihr habt alle bisherigen Erinnerungen gesehen.</p>
+      {hasMore && (
+        <div ref={sentinelRef} className="scroll-sentinel" aria-hidden="true" />
       )}
 
       {selectedItem && (

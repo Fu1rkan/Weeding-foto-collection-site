@@ -489,15 +489,12 @@ export default function UploadPage() {
   }
 
   return (
-    <section className="upload-page">
+    <section className={`upload-page${uploadItems.length > 0 ? ' has-upload-items' : ''}`}>
       <div className="section-grid upload-intro">
         <div className="section-intro">
           <p className="eyebrow">Upload</p>
           <h1>Fotos und Videos hochladen</h1>
-          <p>
-            Zieht eure Erinnerungen direkt hierher oder wählt mehrere Dateien
-            gleichzeitig aus. Pro Upload sind maximal 20 Dateien möglich.
-          </p>
+          <p>max. 20 Dateien.</p>
         </div>
 
         <label
