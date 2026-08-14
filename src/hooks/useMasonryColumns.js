@@ -5,10 +5,6 @@ function getColumnCount() {
     return 3;
   }
 
-  if (window.matchMedia('(max-width: 640px)').matches) {
-    return 1;
-  }
-
   if (window.matchMedia('(max-width: 980px)').matches) {
     return 2;
   }

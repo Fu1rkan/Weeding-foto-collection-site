@@ -7,8 +7,8 @@ import { getGalleryMediaPage } from '../services/mediaGalleryService.js';
 
 const mediaFilterOptions = [
   { label: 'Alle', value: 'all' },
-  { label: 'Nur Bilder', value: 'image' },
-  { label: 'Nur Videos', value: 'video' },
+  { label: 'Bilder', value: 'image' },
+  { label: 'Videos', value: 'video' },
 ];
 
 const sortOptions = [
@@ -44,7 +44,7 @@ function GalleryMedia({ item, isLightbox = false }) {
       sizes={
         isLightbox
           ? '100vw'
-          : '(max-width: 640px) calc(100vw - 2rem), (max-width: 980px) calc((100vw - 3rem) / 2), 380px'
+          : '(max-width: 640px) calc((100vw - 3rem) / 2), (max-width: 980px) calc((100vw - 3rem) / 2), 380px'
       }
       src={imageUrl}
       srcSet={responsiveSrcSet}
