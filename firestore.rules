@@ -47,7 +47,7 @@ service cloud.firestore {
     function isAllowedVideoMetadata() {
       return hasVideoExtension(request.resource.data.fileName)
         && isVideoType(request.resource.data.fileType)
-        && request.resource.data.fileSize <= 2 * 1024 * 1024 * 1024;
+        && request.resource.data.fileSize <= 4 * 1024 * 1024 * 1024;
     }
 
     function hasValidMediaFields() {

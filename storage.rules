@@ -47,7 +47,7 @@ service firebase.storage {
     function isAllowedVideoUpload(fileName) {
       return hasVideoExtension(fileName)
         && isVideoContentType(request.resource.contentType)
-        && request.resource.size <= 2 * 1024 * 1024 * 1024;
+        && request.resource.size <= 4 * 1024 * 1024 * 1024;
     }
 
     function isAllowedStoredImage(fileName) {
@@ -59,7 +59,7 @@ service firebase.storage {
     function isAllowedStoredVideo(fileName) {
       return hasVideoExtension(fileName)
         && isVideoContentType(resource.contentType)
-        && resource.size <= 2 * 1024 * 1024 * 1024;
+        && resource.size <= 4 * 1024 * 1024 * 1024;
     }
 
     function isAllowedThumbnailUpload(fileName) {

@@ -16,7 +16,7 @@ import {
 import { getMediaType, isSupportedMediaFile } from '../utils/fileUtils.js';
 
 const MAX_FILES_PER_UPLOAD = 40;
-const MAX_GUEST_UPLOADS_PER_24_HOURS = 100;
+const MAX_GUEST_UPLOADS_PER_24_HOURS = 200;
 const ACTIVE_UPLOAD_STATUSES = ['checking', 'queued', 'uploading', 'saving'];
 const activeUploadTasks = {};
 const uploadStoreListeners = new Set();
@@ -608,6 +608,10 @@ export default function UploadPage() {
           <p className="eyebrow">Upload</p>
           <h1>Fotos und Videos hochladen</h1>
           <p>max. 40 Dateien.</p>
+          <p className="upload-visibility-note">
+            Hinweis: Eure Uploads erscheinen später in der Galerie und sind für
+            andere Gäste sichtbar.
+          </p>
         </div>
 
         <label

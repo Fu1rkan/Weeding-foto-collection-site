@@ -191,8 +191,8 @@ p {
   border: 1px solid rgba(108, 74, 62, 0.12);
   border-radius: clamp(1.6rem, 4vw, 3rem);
   background:
-    linear-gradient(90deg, rgba(45, 34, 30, 0.68), rgba(45, 34, 30, 0.2)),
-    url("../assets/hero-background.svg") center / cover;
+    linear-gradient(90deg, rgba(31, 26, 24, 0.72), rgba(31, 26, 24, 0.38)),
+    url("../assets/marcel-sophia-light-tunnel.jpeg") center 56% / cover;
   animation: fadeInUp 680ms ease backwards;
   box-shadow: 0 30px 100px rgba(108, 74, 62, 0.18);
   padding: clamp(2rem, 6vw, 5rem);
@@ -889,7 +889,7 @@ body:has(.upload-page:not(.has-upload-items)) .app-shell {
 
 body:has(.upload-page:not(.has-upload-items)) .site-header {
   flex: 0 0 auto;
-  padding-block: clamp(0.65rem, 2svh, 1rem);
+  padding-block: 1.25rem;
 }
 
 body:has(.upload-page:not(.has-upload-items)) .page-container {
@@ -912,6 +912,13 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
 
 .upload-intro {
   align-items: stretch;
+}
+
+.upload-visibility-note {
+  max-width: 34ch;
+  margin-top: 0.8rem;
+  color: #8a746b !important;
+  font-size: 0.95rem !important;
 }
 
 .dropzone {
@@ -1705,7 +1712,7 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
 
 .gallery-controls {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
@@ -2000,19 +2007,31 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
 .lightbox {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 180;
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
+  overflow: auto;
+  overscroll-behavior: contain;
   background: rgba(34, 25, 22, 0.82);
   animation: fadeIn 180ms ease backwards;
-  padding: clamp(1rem, 4vw, 2rem);
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
 }
 
 .lightbox-content {
   position: relative;
   display: grid;
   width: min(100%, 1180px);
-  max-height: 94vh;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100svh - 2rem);
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-bottom));
   border-radius: 1.35rem;
   background: #fff8f3;
   animation: scaleIn 220ms ease backwards;
@@ -2087,7 +2106,10 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
 .lightbox-media video {
   display: block;
   width: 100%;
-  max-height: 86vh;
+  height: auto;
+  max-height: calc(100vh - 5.5rem);
+  max-height: calc(100svh - 5.5rem);
+  max-height: calc(100dvh - 5.5rem - env(safe-area-inset-bottom));
   object-fit: contain;
 }
 
@@ -2259,7 +2281,7 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
 
 @media (max-width: 640px) {
   body:has(.upload-page:not(.has-upload-items)) .site-header {
-    padding-block: 0.65rem;
+    padding-block: 1.25rem;
   }
 
   body:has(.upload-page:not(.has-upload-items)) .page-container {
@@ -2424,10 +2446,6 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
 
   .upload-preview {
     min-height: 15rem;
-  }
-
-  .lightbox-content {
-    max-height: 94vh;
   }
 
   .lightbox-nav-prev {
@@ -3021,7 +3039,11 @@ body:has(.upload-page:not(.has-upload-items)) .page-container {
   }
 
   .lightbox {
-    padding: 0.65rem;
+    padding:
+      max(0.65rem, env(safe-area-inset-top))
+      max(0.65rem, env(safe-area-inset-right))
+      max(0.9rem, env(safe-area-inset-bottom))
+      max(0.65rem, env(safe-area-inset-left));
   }
 
   .lightbox-close,

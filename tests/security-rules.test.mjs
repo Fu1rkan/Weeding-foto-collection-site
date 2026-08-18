@@ -20,6 +20,7 @@ import { deleteObject, getMetadata, ref, uploadBytes } from 'firebase/storage';
 const PROJECT_ID = process.env.GCLOUD_PROJECT ?? 'demo-hochzeitswebseite-rules';
 const STORAGE_BUCKET = `gs://${PROJECT_ID}.appspot.com`;
 const IMAGE_LIMIT_BYTES = 50 * 1024 * 1024;
+const VIDEO_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const THUMBNAIL_LIMIT_BYTES = 2 * 1024 * 1024;
 const VALID_HASH = 'a'.repeat(64);
 
@@ -96,6 +97,36 @@ describe('Firestore media rules', () => {
           fileName: 'photo.webp',
           fileType: 'image/webp',
           thumbnailUrl: 'https://example.com/photo-thumbnail.webp',
+        }),
+      ),
+    );
+  });
+
+  it('allows video metadata up to 4 GB and blocks larger videos', async () => {
+    const guest = testEnv.authenticatedContext('guest-user');
+    const videoHash = 'c'.repeat(64);
+    const oversizedVideoHash = 'd'.repeat(64);
+
+    await assertSucceeds(
+      setDoc(
+        doc(guest.firestore(), `media/${videoHash}`),
+        mediaData({
+          fileHash: videoHash,
+          fileName: 'video.mp4',
+          fileType: 'video/mp4',
+          fileSize: VIDEO_LIMIT_BYTES,
+        }),
+      ),
+    );
+
+    await assertFails(
+      setDoc(
+        doc(guest.firestore(), `media/${oversizedVideoHash}`),
+        mediaData({
+          fileHash: oversizedVideoHash,
+          fileName: 'video.mp4',
+          fileType: 'video/mp4',
+          fileSize: VIDEO_LIMIT_BYTES + 1,
         }),
       ),
     );
