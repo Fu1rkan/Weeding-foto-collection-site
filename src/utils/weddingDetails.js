@@ -80,7 +80,7 @@ export const faqItems = [
   {
     question: 'Wie kann ich Fotos und Videos hochladen?',
     answer:
-      'Klickt auf „Fotos & Videos hochladen“, gebt den Hochzeitscode ein und wählt anschließend eure Bilder oder Videos aus. Ihr könnt auch mehrere Dateien gleichzeitig hochladen.',
+      'Klickt auf dem Handy auf das Burgermenü und wählt „Hochladen“ aus. Gebt anschließend den Gästecode ein und legt eure Bilder oder Videos ab oder wählt sie aus. Ihr könnt auch mehrere Dateien gleichzeitig hochladen.',
   },
   {
     question: 'Wo finde ich den Code?',

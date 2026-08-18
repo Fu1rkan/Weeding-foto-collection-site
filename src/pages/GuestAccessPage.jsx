@@ -51,14 +51,17 @@ export default function GuestAccessPage() {
           Zugangscode
           <input
             autoComplete="one-time-code"
+            enterKeyHint="done"
             id="guest-code"
+            inputMode="numeric"
             disabled={isSubmitting}
             onChange={(event) => {
               setCode(event.target.value);
               setError('');
             }}
+            pattern="[0-9]*"
             placeholder="Code eingeben"
-            type="password"
+            type="tel"
             value={code}
           />
         </label>

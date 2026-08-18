@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { VideoCover } from '../components/VideoCover.jsx';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock.js';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll.js';
 import { useMasonryColumns } from '../hooks/useMasonryColumns.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
@@ -73,6 +74,8 @@ export default function GalleryPage() {
     sortOptions.find((option) => option.value === sortOrder) ?? sortOptions[0];
   const hasLightboxNavigation = mediaItems.length > 1;
   const masonryColumns = useMasonryColumns(mediaItems);
+
+  useBodyScrollLock(Boolean(selectedItem));
 
   const showPreviousItem = useCallback(() => {
     setSelectedIndex((currentIndex) => {

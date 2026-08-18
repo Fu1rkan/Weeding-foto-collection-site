@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { optimizeImageForUpload } from '../services/imageCompressionService.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { calculateFileHash } from '../services/fileHashService.js';
 import { ensureAnonymousSession } from '../services/firebaseAuthService.js';
 import { getGuestId } from '../services/guestIdentityService.js';
 import { createVideoThumbnailForUpload } from '../services/videoThumbnailService.js';
-import { getVideoPreviewSource } from '../utils/videoPreviewUtils.js';
 import {
   createMediaUpload,
   DUPLICATE_FILE_HASH_ERROR_CODE,
@@ -14,52 +13,92 @@ import {
   saveMediaMetadata,
   uploadMediaThumbnail,
 } from '../services/mediaUploadService.js';
-import {
-  formatFileSize,
-  getMediaType,
-  isSupportedMediaFile,
-} from '../utils/fileUtils.js';
+import { getMediaType, isSupportedMediaFile } from '../utils/fileUtils.js';
 
-const MAX_FILES_PER_UPLOAD = 20;
+const MAX_FILES_PER_UPLOAD = 40;
 const MAX_GUEST_UPLOADS_PER_24_HOURS = 100;
-
-const uploadStatusLabels = {
-  queued: 'Wartet',
-  checking: 'Prüft Datei',
-  uploading: 'Upload läuft',
-  saving: 'Speichert Daten',
-  success: 'Hochgeladen',
-  error: 'Fehler',
-  blocked: 'Blockiert',
-  canceled: 'Abgebrochen',
+const ACTIVE_UPLOAD_STATUSES = ['checking', 'queued', 'uploading', 'saving'];
+const activeUploadTasks = {};
+const uploadStoreListeners = new Set();
+let uploadStoreState = {
+  feedback: null,
+  isPreparingUpload: false,
+  selectedUploadTotal: 0,
+  uploadItems: [],
 };
 
+function getUploadStoreSnapshot() {
+  return uploadStoreState;
+}
+
+function setUploadStoreState(updater) {
+  uploadStoreState =
+    typeof updater === 'function'
+      ? updater(uploadStoreState)
+      : {
+          ...uploadStoreState,
+          ...updater,
+        };
+
+  uploadStoreListeners.forEach((listener) => {
+    listener(uploadStoreState);
+  });
+}
+
+function subscribeUploadStore(listener) {
+  uploadStoreListeners.add(listener);
+
+  return () => {
+    uploadStoreListeners.delete(listener);
+  };
+}
+
+function setFeedback(feedback) {
+  setUploadStoreState({ feedback });
+}
+
+function setIsPreparingUpload(isPreparingUpload) {
+  setUploadStoreState({ isPreparingUpload });
+}
+
+function setSelectedUploadTotal(selectedUploadTotal) {
+  setUploadStoreState({ selectedUploadTotal });
+}
+
+function setUploadItems(updater) {
+  setUploadStoreState((currentState) => ({
+    ...currentState,
+    uploadItems:
+      typeof updater === 'function'
+        ? updater(currentState.uploadItems)
+        : updater,
+  }));
+}
+
+function hasActiveUploadSession() {
+  return (
+    uploadStoreState.isPreparingUpload ||
+    uploadStoreState.uploadItems.some((item) =>
+      ACTIVE_UPLOAD_STATUSES.includes(item.status),
+    )
+  );
+}
+
 function createUploadItem(optimizedFile) {
-  const { file, originalFile, thumbnailFile, wasCompressed } = optimizedFile;
-  const compressionMessage = wasCompressed
-    ? `Bild wurde für schnelleren Upload komprimiert: ${formatFileSize(
-        originalFile.size,
-      )} → ${formatFileSize(file.size)}.`
-    : '';
+  const { file, originalFile, thumbnailFile } = optimizedFile;
 
   return {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${file.name}`,
-    compressionMessage,
     file,
     fileHash: '',
     fileName: file.name,
-    fileSize: formatFileSize(file.size),
     guestId: '',
-    mediaType: getMediaType(file),
     message: '',
     originalFile,
-    previewUrl: URL.createObjectURL(file),
     progress: 0,
     status: 'queued',
     storagePath: '',
     thumbnailFile,
-    thumbnailPreviewUrl: thumbnailFile ? URL.createObjectURL(thumbnailFile) : '',
-    wasCompressed,
   };
 }
 
@@ -114,11 +153,27 @@ function getQuotaErrorMessage(error) {
 export default function UploadPage() {
   usePageTitle('Upload');
 
-  const [feedback, setFeedback] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadItems, setUploadItems] = useState([]);
-  const uploadTasksRef = useRef({});
-  const previewUrlsRef = useRef(new Set());
+  const [uploadState, setUploadState] = useState(getUploadStoreSnapshot);
+  const { feedback, isPreparingUpload, selectedUploadTotal, uploadItems } =
+    uploadState;
+  const uploadedItemCount = uploadItems.filter(
+    (item) => item.status === 'success',
+  ).length;
+  const uploadTotalCount =
+    uploadItems.length > 0 ? uploadItems.length : selectedUploadTotal;
+  const hasActiveUploadWork =
+    isPreparingUpload ||
+    uploadItems.some((item) =>
+      ACTIVE_UPLOAD_STATUSES.includes(item.status),
+    );
+  const hasUploadProgress = isPreparingUpload || uploadTotalCount > 0;
+  const uploadProgressValue =
+    uploadTotalCount > 0
+      ? Math.round((uploadedItemCount / uploadTotalCount) * 100)
+      : 0;
+
+  useEffect(() => subscribeUploadStore(setUploadState), []);
 
   const updateUploadItem = useCallback((itemId, updates) => {
     setUploadItems((currentItems) =>
@@ -177,7 +232,7 @@ export default function UploadPage() {
           const message = getUploadErrorMessage(error);
           const status = error.code === 'storage/canceled' ? 'canceled' : 'error';
 
-          delete uploadTasksRef.current[item.id];
+          delete activeUploadTasks[item.id];
 
           updateUploadItem(item.id, {
             message,
@@ -255,11 +310,11 @@ export default function UploadPage() {
             });
           }
 
-          delete uploadTasksRef.current[item.id];
+          delete activeUploadTasks[item.id];
         },
       );
 
-      uploadTasksRef.current[item.id] = {
+      activeUploadTasks[item.id] = {
         unsubscribe,
         uploadTask,
       };
@@ -270,6 +325,8 @@ export default function UploadPage() {
   const checkAndStartUploads = useCallback(
     async (items, guestId) => {
       const hashesInCurrentSelection = new Set();
+      const currentItemIds = new Set(items.map((item) => item.id));
+      const startedItemIds = new Set();
       let blockedCount = 0;
       let startedCount = 0;
 
@@ -320,6 +377,7 @@ export default function UploadPage() {
           });
 
           startedCount += 1;
+          startedItemIds.add(item.id);
           void startUpload(preparedItem);
         } catch {
           blockedCount += 1;
@@ -331,7 +389,14 @@ export default function UploadPage() {
         }
       }
 
+      setUploadItems((currentItems) =>
+        currentItems.filter(
+          (item) => !currentItemIds.has(item.id) || startedItemIds.has(item.id),
+        ),
+      );
+
       if (startedCount === 0) {
+        setSelectedUploadTotal(0);
         setFeedback({
           message:
             blockedCount > 0
@@ -353,18 +418,6 @@ export default function UploadPage() {
     [startUpload, updateUploadItem],
   );
 
-  useEffect(() => {
-    return () => {
-      Object.values(uploadTasksRef.current).forEach(({ unsubscribe }) => {
-        unsubscribe();
-      });
-
-      previewUrlsRef.current.forEach((previewUrl) => {
-        URL.revokeObjectURL(previewUrl);
-      });
-    };
-  }, []);
-
   async function handleFiles(fileList) {
     const selectedFiles = Array.from(fileList);
 
@@ -372,7 +425,26 @@ export default function UploadPage() {
       return;
     }
 
+    if (hasActiveUploadSession()) {
+      setFeedback({
+        message:
+          'Upload läuft bereits. Bitte warte, bis der aktuelle Upload abgeschlossen ist.',
+        type: 'info',
+      });
+      return;
+    }
+
+    setUploadItems([]);
+    setIsPreparingUpload(true);
+    setSelectedUploadTotal(selectedFiles.length);
+    setFeedback({
+      message: 'Dateien werden vorbereitet.',
+      type: 'info',
+    });
+
     if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
+      setIsPreparingUpload(false);
+      setSelectedUploadTotal(0);
       setFeedback({
         message: `Bitte wähle maximal ${MAX_FILES_PER_UPLOAD} Dateien pro Upload aus.`,
         type: 'error',
@@ -382,8 +454,11 @@ export default function UploadPage() {
 
     const supportedFiles = selectedFiles.filter(isSupportedMediaFile);
     const unsupportedCount = selectedFiles.length - supportedFiles.length;
+    setSelectedUploadTotal(supportedFiles.length);
 
     if (!supportedFiles.length) {
+      setIsPreparingUpload(false);
+      setSelectedUploadTotal(0);
       setFeedback({
         message: 'Bitte wähle ausschließlich Bilder oder Videos aus.',
         type: 'error',
@@ -393,7 +468,7 @@ export default function UploadPage() {
 
     const guestId = getGuestId();
     const pendingUploadCount = uploadItems.filter((item) =>
-      ['checking', 'queued', 'uploading', 'saving'].includes(item.status),
+      ACTIVE_UPLOAD_STATUSES.includes(item.status),
     ).length;
 
     let uploadedInLast24Hours = 0;
@@ -402,6 +477,8 @@ export default function UploadPage() {
       await ensureAnonymousSession();
       uploadedInLast24Hours = await getGuestUploadCountLast24Hours(guestId);
     } catch (error) {
+      setIsPreparingUpload(false);
+      setSelectedUploadTotal(0);
       setFeedback({
         message: getQuotaErrorMessage(error),
         type: 'error',
@@ -413,6 +490,8 @@ export default function UploadPage() {
       MAX_GUEST_UPLOADS_PER_24_HOURS - uploadedInLast24Hours - pendingUploadCount;
 
     if (remainingUploads <= 0) {
+      setIsPreparingUpload(false);
+      setSelectedUploadTotal(0);
       setFeedback({
         message: `Du hast das Limit von ${MAX_GUEST_UPLOADS_PER_24_HOURS} Dateien innerhalb von 24 Stunden erreicht.`,
         type: 'error',
@@ -421,6 +500,8 @@ export default function UploadPage() {
     }
 
     if (supportedFiles.length > remainingUploads) {
+      setIsPreparingUpload(false);
+      setSelectedUploadTotal(0);
       setFeedback({
         message: `Du kannst aktuell noch ${remainingUploads} Datei(en) hochladen. Bitte wähle weniger Dateien aus.`,
         type: 'error',
@@ -433,21 +514,29 @@ export default function UploadPage() {
       type: 'info',
     });
 
-    const optimizedFiles = await optimizeFilesForUpload(supportedFiles);
+    let optimizedFiles = [];
+
+    try {
+      optimizedFiles = await optimizeFilesForUpload(supportedFiles);
+    } catch {
+      setIsPreparingUpload(false);
+      setSelectedUploadTotal(0);
+      setFeedback({
+        message:
+          'Die Dateien konnten nicht vorbereitet werden. Bitte versuche es erneut.',
+        type: 'error',
+      });
+      return;
+    }
+
     const compressedCount = optimizedFiles.filter(
       (optimizedFile) => optimizedFile.wasCompressed,
     ).length;
     const nextItems = optimizedFiles.map(createUploadItem);
 
-    nextItems.forEach((item) => {
-      previewUrlsRef.current.add(item.previewUrl);
-
-      if (item.thumbnailPreviewUrl) {
-        previewUrlsRef.current.add(item.thumbnailPreviewUrl);
-      }
-    });
-
     setUploadItems((currentItems) => [...nextItems, ...currentItems]);
+    setIsPreparingUpload(false);
+    setSelectedUploadTotal(0);
 
     setFeedback({
       message:
@@ -469,7 +558,25 @@ export default function UploadPage() {
 
   function handleDragOver(event) {
     event.preventDefault();
+
+    if (hasActiveUploadWork) {
+      return;
+    }
+
     setIsDragging(true);
+  }
+
+  function handleDropzoneClick(event) {
+    if (!hasActiveUploadWork) {
+      return;
+    }
+
+    event.preventDefault();
+    setFeedback({
+      message:
+        'Upload läuft bereits. Bitte warte, bis der aktuelle Upload abgeschlossen ist.',
+      type: 'info',
+    });
   }
 
   function handleDragLeave(event) {
@@ -481,25 +588,35 @@ export default function UploadPage() {
   function handleDrop(event) {
     event.preventDefault();
     setIsDragging(false);
+
+    if (hasActiveUploadWork) {
+      setFeedback({
+        message:
+          'Upload läuft bereits. Bitte warte, bis der aktuelle Upload abgeschlossen ist.',
+        type: 'info',
+      });
+      return;
+    }
+
     handleFiles(event.dataTransfer.files);
   }
 
-  function handleCancelUpload(itemId) {
-    uploadTasksRef.current[itemId]?.uploadTask.cancel();
-  }
-
   return (
-    <section className={`upload-page${uploadItems.length > 0 ? ' has-upload-items' : ''}`}>
+    <section className={`upload-page${hasUploadProgress ? ' has-upload-items' : ''}`}>
       <div className="section-grid upload-intro">
         <div className="section-intro">
           <p className="eyebrow">Upload</p>
           <h1>Fotos und Videos hochladen</h1>
-          <p>max. 20 Dateien.</p>
+          <p>max. 40 Dateien.</p>
         </div>
 
         <label
-          className={`dropzone${isDragging ? ' is-dragging' : ''}`}
+          aria-disabled={hasActiveUploadWork}
+          className={`dropzone${isDragging ? ' is-dragging' : ''}${
+            hasActiveUploadWork ? ' is-disabled' : ''
+          }`}
           htmlFor="media-upload"
+          onClick={handleDropzoneClick}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
@@ -510,11 +627,18 @@ export default function UploadPage() {
             id="media-upload"
             multiple
             onChange={handleInputChange}
+            disabled={hasActiveUploadWork}
             type="file"
           />
           <span aria-hidden="true" className="dropzone-icon" />
-          <strong>Dateien hier ablegen</strong>
-          <p>oder klicken, um Bilder und Videos auszuwählen</p>
+          <strong>
+            {hasActiveUploadWork ? 'Upload läuft gerade' : 'Dateien hier ablegen'}
+          </strong>
+          <p>
+            {hasActiveUploadWork
+              ? 'Bitte warte, bis der aktuelle Upload abgeschlossen ist.'
+              : 'oder klicken, um Bilder und Videos auszuwählen'}
+          </p>
         </label>
       </div>
 
@@ -524,80 +648,47 @@ export default function UploadPage() {
         </p>
       )}
 
-      {uploadItems.length > 0 && (
-        <div className="upload-list" aria-label="Ausgewählte Uploads">
-          {uploadItems.map((item) => (
-            <article className="upload-item" key={item.id}>
-              <div className="upload-preview">
-                {item.mediaType === 'image' ? (
-                  <img
-                    alt={item.fileName}
-                    decoding="async"
-                    loading="lazy"
-                    src={item.previewUrl}
-                  />
-                ) : (
-                  item.thumbnailPreviewUrl ? (
-                    <img
-                      alt={`${item.fileName} Video-Cover`}
-                      decoding="async"
-                      loading="lazy"
-                      src={item.thumbnailPreviewUrl}
-                    />
-                  ) : (
-                    <video
-                      controls
-                      muted
-                      preload="metadata"
-                      src={getVideoPreviewSource(item.previewUrl)}
-                    />
-                  )
-                )}
-              </div>
+      {hasUploadProgress && (
+        <div
+          aria-busy={hasActiveUploadWork}
+          aria-live="polite"
+          className={`upload-progress-summary${hasActiveUploadWork ? ' is-active' : ''}`}
+        >
+          {hasActiveUploadWork && (
+            <span aria-hidden="true" className="upload-progress-spinner" />
+          )}
 
-              <div className="upload-details">
-                <div className="upload-title-row">
-                  <div>
-                    <h3>{item.fileName}</h3>
-                    <p>
-                      {item.mediaType === 'image' ? 'Bild' : 'Video'} ·{' '}
-                      {item.fileSize}
-                    </p>
-                  </div>
-                  <span className={`status-pill is-${item.status}`}>
-                    {uploadStatusLabels[item.status]}
-                  </span>
-                </div>
+          <p>
+            {uploadTotalCount === 0 ? (
+              'Dateien werden vorbereitet...'
+            ) : (
+              <>
+                <span className="upload-progress-count">{uploadedItemCount}</span>{' '}
+                von{' '}
+                <span className="upload-progress-count">
+                  {uploadTotalCount}
+                </span>{' '}
+                wurden hochgeladen
+              </>
+            )}
+          </p>
 
-                <div className="progress-row">
-                  <progress max="100" value={item.progress}>
-                    {item.progress}%
-                  </progress>
-                  <span>{item.progress}%</span>
-                </div>
+          <div
+            aria-label="Upload-Fortschritt"
+            aria-valuemax="100"
+            aria-valuemin="0"
+            aria-valuenow={uploadProgressValue}
+            className="upload-total-progress"
+            role="progressbar"
+          >
+            <span style={{ width: `${uploadProgressValue}%` }} />
+          </div>
 
-                {item.compressionMessage && (
-                  <p className="upload-meta-note">{item.compressionMessage}</p>
-                )}
-
-                {item.message && (
-                  <p className={`upload-message is-${item.status}`}>
-                    {item.message}
-                  </p>
-                )}
-
-                {item.status === 'uploading' && (
-                  <button
-                    className="secondary-button"
-                    onClick={() => handleCancelUpload(item.id)}
-                    type="button"
-                  >
-                    Upload abbrechen
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
+          <small>
+            {isPreparingUpload
+              ? 'Bitte kurz warten.'
+              : `${uploadProgressValue}% abgeschlossen`}
+          </small>
         </div>
       )}
     </section>

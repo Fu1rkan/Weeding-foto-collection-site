@@ -6,6 +6,7 @@ import selectIconMarkup from '../assets/icons/select.svg?raw';
 import trashIconMarkup from '../assets/icons/trash.svg?raw';
 import { VideoCover } from '../components/VideoCover.jsx';
 import { useAdminAccess } from '../hooks/useAdminAccess.js';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import {
   DOWNLOAD_CORS_ERROR_CODE,
@@ -246,6 +247,8 @@ export default function AdminPage() {
   const areAllFilteredItemsSelected =
     filteredItems.length > 0 &&
     filteredItems.every((item) => selectedIds.has(item.id));
+
+  useBodyScrollLock(Boolean(pendingAction || selectedPreviewItem));
 
   const stats = useMemo(() => {
     const imageCount = mediaItems.filter((item) => item.mediaKind === 'image').length;
